@@ -1,16 +1,19 @@
-import React, {createContext, useContext, useState, useEffect} from 'react';
-import {authStore} from '../store/authStore';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authStore } from '../store/authStore';
+import { post } from '../helper/apiHelper';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (token: string, user: object) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,13 +28,19 @@ export const AuthProvider: React.FC<{children: React.ReactNode}> = ({children}) 
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
-    authStore.clear();
-    setIsAuthenticated(false); 
+  const logout = async () => {
+    try {
+      await post('/auth/logout', {});
+    } catch (error) {
+      console.log('Logout API error:', error);
+    } finally {
+      authStore.clear();
+      setIsAuthenticated(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{isAuthenticated, isLoading, login, logout}}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
