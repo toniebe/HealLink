@@ -1,18 +1,27 @@
-import { Image, StyleSheet, View } from 'react-native';
-import React, { useEffect } from 'react';
+import {Image, StyleSheet, View} from 'react-native';
+import React, {useEffect} from 'react';
+import {useAuth} from '../context/AuthContext';
 
-const SplashScreen = ({ navigation }) => {
+const SplashScreen = ({navigation}: any) => {
+  const {isAuthenticated} = useAuth();
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.navigate('Login');
+      if (isAuthenticated) {
+        navigation.replace('Home');
+      } else {
+        navigation.replace('Login');
+      }
     }, 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAuthenticated, navigation]);
+
   return (
     <View style={styles.container}>
       <Image
         source={require('../assets/images/Healink2.png')}
-        style={{ width: 200, height: 200 }}
+        style={{width: 200, height: 200}}
+        resizeMode="contain"
       />
     </View>
   );
@@ -25,6 +34,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#D5E7B5',
+    backgroundColor: '#EEF6F7',
   },
 });
