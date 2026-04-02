@@ -5,10 +5,10 @@ import {useAuth} from '../context/AuthContext';
 const SplashScreen = ({navigation}: any) => {
   const {isAuthenticated} = useAuth();
 
-  useEffect(() => {
+ useEffect(() => {
     const timer = setTimeout(() => {
       if (isAuthenticated) {
-        navigation.replace('Home');
+        navigation.replace('MainTab');
       } else {
         navigation.replace('Login');
       }
