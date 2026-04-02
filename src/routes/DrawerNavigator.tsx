@@ -16,6 +16,7 @@ import {
   ChevronRight,
   X,
   Menu,
+  Home,
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { authStore } from '../store/authStore';
@@ -42,7 +43,7 @@ const drawerMenuItems = [
   {
     name: 'MainTab' as keyof DrawerParamList,
     label: 'Home',
-    Icon: MessageCircle,
+    Icon: Home,
     color: C.primary,
   },
   {
@@ -85,10 +86,15 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = props => {
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
   const activeRoute = props.state.routeNames[props.state.index];
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const navigation = useNavigation<any>();
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await logout();
     setIsLoggingOut(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    });
   };
 
   return (
@@ -225,8 +231,6 @@ export const FloatingMenuButton: React.FC = () => {
   );
 };
 
-
-
 // ── Drawer Navigator ──────────────────────────────────────────────────────────
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
@@ -247,24 +251,12 @@ const DrawerNavigator: React.FC = () => {
         swipeEdgeWidth: 60,
       }}
     >
-      <Drawer.Screen
-        name="MainTab"
-        component={TabNavigator}
-      />
+      <Drawer.Screen name="MainTab" component={TabNavigator} />
       <Drawer.Screen name="AIChat" component={AIChatScreen} />
       <Drawer.Screen name="Tren" component={TrendScreen} />
-      <Drawer.Screen
-        name="MoodJournal"
-        component={MoodJournalScreen}
-      />
-      <Drawer.Screen
-        name="Insight"
-        component={InsightScreen}
-      />
-      <Drawer.Screen
-        name="Settings"
-        component={SettingsScreen}
-      />
+      <Drawer.Screen name="MoodJournal" component={MoodJournalScreen} />
+      <Drawer.Screen name="Insight" component={InsightScreen} />
+      <Drawer.Screen name="Settings" component={SettingsScreen} />
     </Drawer.Navigator>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Surface, Avatar, Badge } from 'react-native-paper';
+import { Text, Surface,  Badge } from 'react-native-paper';
 import {
   Heart,
   Droplets,
@@ -97,28 +97,27 @@ const getHRVStatus = (hrv: number): { label: string; color: string } => {
   return { label: 'Poor', color: C.redLight };
 };
 
-const menuItems = [
-  { label: 'AI Chat', icon: '💬', screen: 'AIChat', color: C.primary },
-  { label: 'Screening', icon: '📋', screen: 'Skrining', color: C.orange },
-  { label: 'Trends', icon: '📈', screen: 'Tren', color: '#7B8FD4' },
-  {
-    label: 'Mood Journal',
-    icon: '😊',
-    screen: 'MoodJournal',
-    color: '#27AE60',
-  },
-  { label: 'AI Insights', icon: '🔔', screen: 'Insight', color: C.secondary },
-  {
-    label: 'Telemedicine',
-    icon: '📹',
-    screen: 'Telemedicine',
-    color: C.redLight,
-  },
-];
+// const menuItems = [
+//   { label: 'AI Chat', icon: '💬', screen: 'AIChat', color: C.primary },
+//   { label: 'Screening', icon: '📋', screen: 'Skrining', color: C.orange },
+//   { label: 'Trends', icon: '📈', screen: 'Tren', color: '#7B8FD4' },
+//   {
+//     label: 'Mood Journal',
+//     icon: '😊',
+//     screen: 'MoodJournal',
+//     color: '#27AE60',
+//   },
+//   { label: 'AI Insights', icon: '🔔', screen: 'Insight', color: C.secondary },
+//   {
+//     label: 'Telemedicine',
+//     icon: '📹',
+//     screen: 'Telemedicine',
+//     color: C.redLight,
+//   },
+// ];
 
 const HomeScreen: React.FC = () => {
   const user = authStore.getUser();
-  const initial = user?.name?.charAt(0)?.toUpperCase() ?? 'U';
   const navigation = useNavigation<any>();
 
   const bmi = 22.4;
@@ -143,21 +142,6 @@ const HomeScreen: React.FC = () => {
             >
               <Menu size={20} color={C.primary} />
             </TouchableOpacity>
-
-            <Avatar.Text
-              size={46}
-              label={initial}
-              style={{ backgroundColor: C.primary }}
-              labelStyle={{ color: '#FFF', fontWeight: '700' }}
-            />
-            <View>
-              <Text variant="bodySmall" style={styles.welcomeText}>
-                Welcome 👋
-              </Text>
-              <Text variant="titleMedium" style={styles.userName}>
-                {user?.name ?? 'User'}
-              </Text>
-            </View>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
@@ -173,6 +157,14 @@ const HomeScreen: React.FC = () => {
         </View>
 
         <View style={styles.sectionHeader}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text variant="bodySmall" style={styles.welcomeText}>
+              Welcome,
+            </Text>
+            <Text variant="titleMedium" style={styles.userName}>
+              {user?.name ?? 'User'}
+            </Text>
+          </View>
           <Text variant="headlineMedium" style={styles.overviewTitle}>
             Overview
           </Text>
@@ -634,7 +626,7 @@ const HomeScreen: React.FC = () => {
           </View>
         </Surface>
 
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        {/* <Text variant="titleMedium" style={styles.sectionTitle}>
           Features
         </Text>
         <View style={styles.menuGrid}>
@@ -661,7 +653,7 @@ const HomeScreen: React.FC = () => {
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </View> */}
 
         <View style={{ height: 100 }} />
       </ScrollView>
