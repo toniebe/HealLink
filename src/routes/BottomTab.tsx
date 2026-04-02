@@ -1,10 +1,9 @@
 import React from 'react';
 import {
   Home,
-  FileText,
   ClipboardList,
   Stethoscope,
-  Building2,
+  User2,
 } from 'lucide-react-native';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import { C } from '../helper/theme';
@@ -17,10 +16,10 @@ export const BottomTabBar: React.FC<{state: any; navigation: any}> = ({
 }) => {
   const tabs = [
     {name: 'Home', icon: Home, label: 'Home'},
-    {name: 'Records', icon: FileText, label: 'Records'},
+  
     {name: 'Screening', icon: ClipboardList, label: 'Screening'},
-    {name: 'Doctor', icon: Stethoscope, label: 'Doctor'},
-    {name: 'Hospital', icon: Building2, label: 'Hospital'},
+    {name: 'Telemedicine', icon: Stethoscope, label: 'Telemedicine'},
+    {name: 'Profile', icon: User2, label: 'Profile'},
   ];
 
   return (

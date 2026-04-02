@@ -8,7 +8,8 @@ module.exports = {
       path: process.env.ENVFILE || '.env',
       safe: false,
       allowUndefined: true,
-    }]
+    }],
+    'react-native-reanimated/plugin',
   ],
   env: {
     production: {
