@@ -8,7 +8,7 @@ const SplashScreen = ({navigation}: any) => {
  useEffect(() => {
     const timer = setTimeout(() => {
       if (isAuthenticated) {
-        navigation.replace('MainTab');
+        navigation.replace('Main');
       } else {
         navigation.replace('Login');
       }

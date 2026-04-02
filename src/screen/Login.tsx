@@ -16,7 +16,7 @@ import { Mail, Lock, AppleIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authStore } from '../store/authStore';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+
 
 interface LoginPayload {
   email: string;
@@ -62,15 +62,12 @@ const SOCIALS: {
   },
 ];
 
-// ── Component ────────────────────────────────────────────────────────────────
 
 const LoginScreen: React.FC = ({ navigation }: any) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<FieldError>({});
-
-  // ── Validation ─────────────────────────────────────────────────────────────
 
   const validate = (): boolean => {
     const newErrors: FieldError = {};
@@ -89,7 +86,6 @@ const LoginScreen: React.FC = ({ navigation }: any) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
 
   const handleLogin = async (): Promise<void> => {
     if (!validate()) {
@@ -107,7 +103,6 @@ const LoginScreen: React.FC = ({ navigation }: any) => {
     setLoading(false);
 
     if (error) {
-      // Map server errors to field errors
       if (error.status === 404) {
         setErrors({ email: 'Email tidak ditemukan.' });
       } else if (error.status === 401) {
@@ -123,7 +118,7 @@ const LoginScreen: React.FC = ({ navigation }: any) => {
       authStore.setUser(data.data.user);
       navigation.reset({
         index: 0,
-        routes: [{ name: 'Home' }],
+        routes: [{ name: 'Main' }],
       });
     }
 
@@ -147,7 +142,6 @@ const LoginScreen: React.FC = ({ navigation }: any) => {
           </View>
 
           <View style={styles.fieldGroup}>
-         
             <AppTextInput
               label="Email"
               placeholder="contoh@email.com"
@@ -162,8 +156,6 @@ const LoginScreen: React.FC = ({ navigation }: any) => {
           </View>
 
           <View style={styles.fieldGroup}>
-      
-
             <AppTextInput
               label="Password"
               placeholder="Password"
@@ -268,7 +260,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Fields
   fieldGroup: {
     marginBottom: 16,
   },
@@ -298,7 +289,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF0F0',
   },
 
-  // Password
+
   passwordWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,7 +312,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 
-  // Forgot
+
   forgotWrapper: {
     alignItems: 'flex-end',
     marginBottom: 24,
@@ -332,7 +323,7 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
 
-  // Login Button
+ 
   loginButton: {
     backgroundColor: TEAL,
     borderRadius: 30,
@@ -355,7 +346,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // Divider
+ 
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -372,7 +363,7 @@ const styles = StyleSheet.create({
     color: '#888888',
   },
 
-  // Social
+
   socialRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -399,7 +390,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  // Register
   registerRow: {
     flexDirection: 'row',
     justifyContent: 'center',
