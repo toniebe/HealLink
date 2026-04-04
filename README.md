@@ -1,97 +1,150 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+<p align="center">
+  <img src="src/assets/images/Helink.png" alt="HeaLink Logo" width="120" />
+</p>
 
-# Getting Started
+<h1 align="center">HeaLink</h1>
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+<p align="center">
+  A mobile application for mental health support — connecting patients with professional therapists and psychiatrists through teleconsultation, mood tracking, and personalized wellness tools.
+</p>
 
-## Step 1: Start Metro
+---
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Features
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- Teleconsultation via live video call with mental health professionals
+- Mood tracker with daily emotional logging
+- Appointment scheduling and consultation history
+- Secure authentication and user profile management
+- Push notifications for calls and reminders
 
-```sh
-# Using npm
+---
+
+## Tech Stack
+
+| Library | Version | Purpose |
+|---|---|---|
+| `react-native` | 0.84.1 | Core mobile framework |
+| `react` | 19.2.3 | UI library |
+| `@react-navigation/native` | ^7.2.2 | Navigation container |
+| `@react-navigation/native-stack` | ^7.14.10 | Stack navigator |
+| `@react-navigation/bottom-tabs` | ^7.15.9 | Bottom tab navigator |
+| `@react-navigation/drawer` | ^7.9.8 | Drawer navigator |
+| `@stream-io/video-react-native-sdk` | ^1.31.1 | Video call (Stream) |
+| `@stream-io/react-native-webrtc` | ^137.1.3 | WebRTC for video |
+| `react-native-incall-manager` | ^4.2.1 | In-call audio/video management |
+| `axios` | ^1.14.0 | HTTP client |
+| `react-native-paper` | ^5.15.0 | Material Design UI components |
+| `react-native-mmkv` | ^4.3.0 | Fast key-value storage |
+| `react-native-reanimated` | ^4.3.0 | Animations |
+| `react-native-gesture-handler` | ^2.31.0 | Gesture handling |
+| `react-native-screens` | ^4.24.0 | Native screen optimization |
+| `react-native-safe-area-context` | ^5.7.0 | Safe area insets |
+| `react-native-linear-gradient` | ^2.8.3 | Gradient backgrounds |
+| `react-native-svg` | ^15.15.4 | SVG support |
+| `react-native-gifted-charts` | ^1.4.76 | Charts for mood analytics |
+| `react-native-image-picker` | ^8.2.1 | Profile photo picker |
+| `react-native-permissions` | ^5.5.1 | Runtime permission handling |
+| `@notifee/react-native` | ^9.1.8 | Local push notifications |
+| `@react-native-firebase/app` | ^24.0.0 | Firebase integration |
+| `@react-native-community/netinfo` | ^12.0.1 | Network state detection |
+| `lucide-react-native` | ^1.7.0 | Icon set |
+| `react-native-dotenv` | ^3.4.11 | Environment variable management |
+
+---
+
+## Requirements
+
+- Node >= 22.11.0
+- React Native CLI
+- Xcode (for iOS)
+- Android Studio (for Android)
+
+---
+
+## Usage
+
+### Install dependencies
+
+```bash
+npm install
+# or
+yarn install
+```
+
+### iOS setup
+
+```bash
+cd ios && pod install && cd ..
+```
+
+### Start Metro bundler
+
+```bash
+# Development
 npm start
 
-# OR using Yarn
-yarn start
+# Staging
+npm run start:staging
+
+# Production
+npm run start:prod
 ```
 
-## Step 2: Build and run your app
+### Run on iOS
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+```bash
+# Development
 npm run ios
 
-# OR using Yarn
-yarn ios
+# Staging
+npm run ios:staging
+
+# Production
+npm run ios:prod
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+### Run on Android
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```bash
+# Development
+npm run android
 
-## Step 3: Modify your app
+# Staging
+npm run android:staging
 
-Now that you have successfully run the app, let's make changes!
+# Production
+npm run android:prod
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### Build Android APK
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+```bash
+# Staging
+npm run build:android:staging
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+# Production
+npm run build:android:prod
+```
 
-## Congratulations! :tada:
+### Build Android AAB (Play Store)
 
-You've successfully run and modified your React Native App. :partying_face:
+```bash
+# Staging
+npm run build:aab:staging
 
-### Now what?
+# Production
+npm run build:aab:prod
+```
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+---
 
-# Troubleshooting
+## Environment
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+Create environment files at the project root:
 
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+```
+.env               # default
+.env.staging       # staging
+.env.production    # production
+```
