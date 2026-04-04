@@ -40,3 +40,14 @@ export const del = async <T>(endpoint: string): Promise<ApiResponse<T>> => {
     return { data: null, error };
   }
 };
+
+export const postFormData = async <T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> => {
+  try {
+    const response = await api.post<T>(endpoint, formData, {
+      headers: {'Content-Type': 'multipart/form-data'},
+    });
+    return { data: response as T, error: null };
+  } catch (error: any) {
+    return { data: null, error };
+  }
+};

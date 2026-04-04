@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authStore } from '../store/authStore';
 import { post } from '../helper/apiHelper';
+import { navigationRef } from '../routes';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -31,6 +32,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = async () => {
     try {
       await post('/auth/logout', {});
+      navigationRef.current?.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     } catch (error) {
       console.log('Logout API error:', error);
     } finally {

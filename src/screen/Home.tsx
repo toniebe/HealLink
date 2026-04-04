@@ -1,7 +1,14 @@
-import React from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useCallback, useState } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Surface,  Badge } from 'react-native-paper';
+import { Text, Surface, Badge, ActivityIndicator, ProgressBar } from 'react-native-paper';
 import {
   Heart,
   Droplets,
@@ -11,25 +18,51 @@ import {
   Search,
   Bell,
   Menu,
+  Brain,
 } from 'lucide-react-native';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { authStore } from '../store/authStore';
 import { C } from '../helper/theme';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
+import { get } from '../helper/apiHelper';
 
-// Heart Rate data (7 hari)
-const heartRateData = [
-  { value: 65, frontColor: C.primary },
-  { value: 72, frontColor: C.primary },
-  { value: 68, frontColor: C.primary },
-  { value: 78, frontColor: C.orange },
-  { value: 74, frontColor: C.primary },
-  { value: 70, frontColor: C.primary },
-  { value: 78, frontColor: C.orange },
-];
+// ── Types ──────────────────────────────────────────────────────────────────────
+interface ScreeningData {
+  uuid: string;
+  height_cm: string;
+  weight_kg: string;
+  bmi: string;
+  systolic: number;
+  diastolic: number;
+  phq9_answers: number[];
+  phq9_score: number;
+  created_at: string;
+  updated_at: string;
+}
 
-// HRV data (ms)
-const hrvData = [
+interface SleepEntry {
+  uuid: string;
+  duration_minutes: number;
+  quality_score: string;
+  quality_category: string;
+  sleep_time: string;
+  wake_time: string;
+  sleep_date: string;
+  created_at: string;
+}
+
+interface MentalStatus {
+  uuid: string;
+  risk_level: string;
+  risk_score: string;
+  detected_emotion: string;
+  summary_note: string;
+  contributing_factors: any[];
+  created_at: string;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+const staticHrvData = [
   { value: 42 },
   { value: 48 },
   { value: 45 },
@@ -39,92 +72,134 @@ const hrvData = [
   { value: 52 },
 ];
 
-// Tidur data (jam per hari)
-const sleepData = [
-  { value: 6.5, frontColor: '#7B8FD4' },
-  { value: 7.2, frontColor: '#7B8FD4' },
-  { value: 5.8, frontColor: C.redLight },
-  { value: 8.0, frontColor: '#7B8FD4' },
-  { value: 7.5, frontColor: '#7B8FD4' },
-  { value: 6.0, frontColor: C.redLight },
-  { value: 7.8, frontColor: '#7B8FD4' },
+const staticHeartRateData = [
+  { value: 65, frontColor: C.primary },
+  { value: 72, frontColor: C.primary },
+  { value: 68, frontColor: C.primary },
+  { value: 78, frontColor: C.orange },
+  { value: 74, frontColor: C.primary },
+  { value: 70, frontColor: C.primary },
+  { value: 78, frontColor: C.orange },
 ];
 
-// Tekanan Darah data
-const systolicData = [
-  { value: 120 },
-  { value: 125 },
-  { value: 118 },
-  { value: 122 },
-  { value: 128 },
-  { value: 119 },
-  { value: 125 },
-];
-const diastolicData = [
-  { value: 80 },
-  { value: 82 },
-  { value: 78 },
-  { value: 84 },
-  { value: 85 },
-  { value: 79 },
-  { value: 83 },
-];
-
-// ── Sleep Stage Labels ─────────────────────────────────────────────────────────
-const sleepDays = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-
-// ── Helper ────────────────────────────────────────────────────────────────────
-const getBMICategory = (bmi: number): { label: string; color: string } => {
-  if (bmi < 18.5) {
-    return { label: 'Underweight', color: C.orange };
-  }
-  if (bmi < 25) {
-    return { label: 'Normal', color: '#27AE60' };
-  }
-  if (bmi < 30) {
-    return { label: 'Overweight', color: C.orange };
-  }
+const getBMICategory = (bmi: number) => {
+  if (bmi < 18.5) { return { label: 'Underweight', color: C.orange }; }
+  if (bmi < 25)   { return { label: 'Normal',      color: '#27AE60' }; }
+  if (bmi < 30)   { return { label: 'Overweight',  color: C.orange }; }
   return { label: 'Obesity', color: C.redLight };
 };
 
-const getHRVStatus = (hrv: number): { label: string; color: string } => {
-  if (hrv >= 50) {
-    return { label: 'Good', color: '#27AE60' };
-  }
-  if (hrv >= 35) {
-    return { label: 'Fair', color: C.orange };
-  }
+const getHRVStatus = (hrv: number) => {
+  if (hrv >= 50) { return { label: 'Good', color: '#27AE60' }; }
+  if (hrv >= 35) { return { label: 'Fair', color: C.orange }; }
   return { label: 'Poor', color: C.redLight };
 };
 
-// const menuItems = [
-//   { label: 'AI Chat', icon: '💬', screen: 'AIChat', color: C.primary },
-//   { label: 'Screening', icon: '📋', screen: 'Skrining', color: C.orange },
-//   { label: 'Trends', icon: '📈', screen: 'Tren', color: '#7B8FD4' },
-//   {
-//     label: 'Mood Journal',
-//     icon: '😊',
-//     screen: 'MoodJournal',
-//     color: '#27AE60',
-//   },
-//   { label: 'AI Insights', icon: '🔔', screen: 'Insight', color: C.secondary },
-//   {
-//     label: 'Telemedicine',
-//     icon: '📹',
-//     screen: 'Telemedicine',
-//     color: C.redLight,
-//   },
-// ];
+const getBPStatus = (systolic: number, diastolic: number) => {
+  if (systolic < 120 && diastolic < 80) { return { label: 'Normal',       color: '#27AE60' }; }
+  if (systolic < 130 && diastolic < 80) { return { label: 'Elevated',     color: C.orange }; }
+  if (systolic < 140 || diastolic < 90) { return { label: 'High Stage 1', color: '#F5A623' }; }
+  return { label: 'High Stage 2', color: C.redLight };
+};
 
+const getPHQ9Severity = (score: number) => {
+  if (score <= 4)  { return { label: 'Minimal',           color: '#27AE60', bg: '#27AE6015' }; }
+  if (score <= 9)  { return { label: 'Mild',              color: C.orange,  bg: C.orange + '15' }; }
+  if (score <= 14) { return { label: 'Moderate',          color: '#F5A623', bg: '#F5A62315' }; }
+  if (score <= 19) { return { label: 'Moderately Severe', color: C.redLight, bg: C.redLight + '15' }; }
+  return { label: 'Severe', color: C.red, bg: C.red + '15' };
+};
+
+const getRiskColor = (level: string) => {
+  switch (level?.toLowerCase()) {
+    case 'low':    return '#27AE60';
+    case 'medium': return C.orange;
+    case 'high':   return C.redLight;
+    default:       return C.textMuted;
+  }
+};
+
+const getLast7Days = () => {
+  const dates: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+  return dates;
+};
+
+const requestPermissions = async () => {
+  if (Platform.OS === 'android') {
+    await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    ]);
+  }
+};
+
+const sleepDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// ── Component ──────────────────────────────────────────────────────────────────
 const HomeScreen: React.FC = () => {
   const user = authStore.getUser();
   const navigation = useNavigation<any>();
 
-  const bmi = 22.4;
-  const bmiCategory = getBMICategory(bmi);
-  const hrv = 52;
-  const hrvStatus = getHRVStatus(hrv);
-  const bmiPercent = ((bmi - 10) / (40 - 10)) * 100;
+  const [screening, setScreening] = useState<ScreeningData | null>(null);
+  const [sleepHistory, setSleepHistory] = useState<SleepEntry[]>([]);
+  const [latestMental, setLatestMental] = useState<MentalStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const dates = getLast7Days();
+    const from = dates[0];
+    const to = dates[6];
+
+    const [screeningRes, sleepRes, mentalRes] = await Promise.all([
+      get<any>('/screening/latest'),
+      get<any>('/sleep/history', { from, to }),
+      get<any>('/mental-status/latest'),
+    ]);
+
+    if (screeningRes.data?.success) { setScreening(screeningRes.data.data); }
+    if (sleepRes.data)              { setSleepHistory(sleepRes.data?.data ?? []); }
+    if (mentalRes.data?.success)    { setLatestMental(mentalRes.data.data); }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    requestPermissions();
+    fetchData();
+  }, [fetchData]);
+
+  // ── Derived values ───────────────────────────────────────────────────────────
+  const bmiNum         = screening ? parseFloat(screening.bmi) : null;
+  const bmiCategory    = bmiNum ? getBMICategory(bmiNum) : { label: '—', color: C.textMuted };
+  const bmiPercent     = bmiNum ? Math.min(Math.max(((bmiNum - 10) / (40 - 10)) * 100, 0), 100) : 0;
+  const bpStat         = screening ? getBPStatus(screening.systolic, screening.diastolic) : null;
+  const phqSev         = screening ? getPHQ9Severity(screening.phq9_score) : null;
+
+  const latestHrv      = staticHrvData[staticHrvData.length - 1].value;
+  const hrvStatus      = getHRVStatus(latestHrv);
+
+  const avgSleepHours  = sleepHistory.length
+    ? (sleepHistory.reduce((a, s) => a + s.duration_minutes, 0) / sleepHistory.length / 60).toFixed(1)
+    : null;
+
+  const sleepChartData = sleepHistory.slice(0, 7).map(s => ({
+    value: Math.round((s.duration_minutes / 60) * 10) / 10,
+    frontColor:
+      s.quality_category === 'poor'      ? C.redLight :
+      s.quality_category === 'fair'      ? C.orange   :
+      s.quality_category === 'excellent' ? '#27AE60'  : '#7B8FD4',
+  }));
+
+  const displaySleepDays = sleepHistory.slice(0, 7).map(s =>
+    new Date(s.sleep_date).toLocaleDateString('en', { weekday: 'short' }),
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -133,6 +208,7 @@ const HomeScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Header ──────────────────────────────────────────────── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <TouchableOpacity
@@ -157,514 +233,392 @@ const HomeScreen: React.FC = () => {
         </View>
 
         <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text variant="bodySmall" style={styles.welcomeText}>
-              Welcome,
-            </Text>
-            <Text variant="titleMedium" style={styles.userName}>
-              {user?.name ?? 'User'}
-            </Text>
+          <View style={styles.welcomeRow}>
+            <Text variant="bodySmall" style={styles.welcomeText}>Welcome, </Text>
+            <Text variant="titleMedium" style={styles.userName}>{user?.name ?? 'User'}</Text>
           </View>
-          <Text variant="headlineMedium" style={styles.overviewTitle}>
-            Overview
-          </Text>
-          <Text variant="bodySmall" style={styles.overviewSub}>
-            Dashboard Your Health
-          </Text>
+          <Text variant="headlineMedium" style={styles.overviewTitle}>Overview</Text>
+          <Text variant="bodySmall" style={styles.overviewSub}>Dashboard Your Health</Text>
         </View>
 
-        {/* ══════════════════════════════════════════
-            CARD 1 — Heart Rate
-        ══════════════════════════════════════════ */}
-        <Surface style={styles.card} elevation={1}>
-          <View style={styles.cardHeader}>
-            <View
-              style={[
-                styles.cardIconWrapper,
-                { backgroundColor: C.orangeLight },
-              ]}
-            >
-              <Heart size={18} color={C.orange} fill={C.orange} />
-            </View>
-            <View style={styles.cardTitleGroup}>
-              <Text variant="labelMedium" style={styles.cardTitle}>
-                Heart Rate
-              </Text>
-              <Text variant="labelSmall" style={styles.cardSubtitle}>
-                7 days ago
-              </Text>
-            </View>
-            <Text
-              variant="labelSmall"
-              style={[
-                styles.statusBadge,
-                { backgroundColor: C.orangeLight, color: C.orange },
-              ]}
-            >
-              ● 78 BPM
-            </Text>
-          </View>
-
-          <BarChart
-            data={heartRateData}
-            width={280}
-            height={80}
-            barWidth={26}
-            spacing={12}
-            hideRules
-            hideAxesAndRules
-            barBorderRadius={6}
-            noOfSections={3}
-            maxValue={100}
-            yAxisThickness={0}
-            xAxisThickness={0}
-            isAnimated
-          />
-
-          <View style={styles.metricRow}>
-            <View style={styles.metricItem}>
-              <Text variant="labelSmall" style={styles.metricLabel}>
-                Min
-              </Text>
-              <Text
-                variant="titleMedium"
-                style={[styles.metricVal, { color: C.primary }]}
-              >
-                65
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                bpm
-              </Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text variant="labelSmall" style={styles.metricLabel}>
-                Average
-              </Text>
-              <Text
-                variant="titleMedium"
-                style={[styles.metricVal, { color: C.orange }]}
-              >
-                72
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                bpm
-              </Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text variant="labelSmall" style={styles.metricLabel}>
-                Max
-              </Text>
-              <Text
-                variant="titleMedium"
-                style={[styles.metricVal, { color: C.redLight }]}
-              >
-                78
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                bpm
-              </Text>
-            </View>
-          </View>
-        </Surface>
-
-        {/* ══════════════════════════════════════════
-            CARD 2 — HRV & Tekanan Darah (Row)
-        ══════════════════════════════════════════ */}
-        <View style={styles.row}>
-          {/* HRV Card */}
-          <Surface style={[styles.card, styles.halfCard]} elevation={1}>
-            <View style={styles.cardHeader}>
-              <View
-                style={[
-                  styles.cardIconWrapper,
-                  { backgroundColor: C.primary + '20' },
-                ]}
-              >
-                <Activity size={16} color={C.primary} />
-              </View>
-              <Text variant="labelSmall" style={styles.cardTitle}>
-                HRV
-              </Text>
-            </View>
-
-            <LineChart
-              data={hrvData}
-              width={110}
-              height={55}
-              color={C.primary}
-              thickness={2}
-              hideRules
-              hideAxesAndRules
-              dataPointsColor={C.primary}
-              dataPointsRadius={3}
-              isAnimated
-              curved
-              startFillColor={C.primary + '30'}
-              endFillColor={C.primary + '05'}
-              areaChart
-            />
-
-            <Text
-              variant="headlineSmall"
-              style={[styles.bigVal, { color: C.primary }]}
-            >
-              {hrv}{' '}
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                ms
-              </Text>
-            </Text>
-            <View
-              style={[styles.pill, { backgroundColor: hrvStatus.color + '20' }]}
-            >
-              <Text
-                variant="labelSmall"
-                style={{ color: hrvStatus.color, fontWeight: '700' }}
-              >
-                {hrvStatus.label}
-              </Text>
-            </View>
-          </Surface>
-
-          {/* Tekanan Darah Card */}
-          <Surface style={[styles.card, styles.halfCard]} elevation={1}>
-            <View style={styles.cardHeader}>
-              <View
-                style={[
-                  styles.cardIconWrapper,
-                  { backgroundColor: C.redLight + '20' },
-                ]}
-              >
-                <Droplets size={16} color={C.redLight} />
-              </View>
-              <Text variant="labelSmall" style={styles.cardTitle}>
-                Tekanan Darah
-              </Text>
-            </View>
-
-            <LineChart
-              data={systolicData}
-              data2={diastolicData}
-              width={110}
-              height={55}
-              color={C.redLight}
-              color2={C.orange}
-              thickness={2}
-              thickness2={2}
-              hideRules
-              hideAxesAndRules
-              dataPointsColor={C.redLight}
-              dataPointsColor2={C.orange}
-              dataPointsRadius={3}
-              isAnimated
-              curved
-            />
-
-            <Text
-              variant="titleLarge"
-              style={{ color: C.redLight, fontWeight: '800', marginTop: 4 }}
-            >
-              125/83
-            </Text>
-            <Text variant="labelSmall" style={styles.metricUnit}>
-              mmHg
-            </Text>
-            <View style={[styles.pill, { backgroundColor: '#FFF0D6' }]}>
-              <Text
-                variant="labelSmall"
-                style={{ color: C.orange, fontWeight: '700' }}
-              >
-                Normal Tinggi
-              </Text>
-            </View>
-          </Surface>
-        </View>
-
-        {/* ══════════════════════════════════════════
-            CARD 3 — Tidur (Grafik Batang)
-        ══════════════════════════════════════════ */}
-        <Surface style={styles.card} elevation={1}>
-          <View style={styles.cardHeader}>
-            <View
-              style={[styles.cardIconWrapper, { backgroundColor: '#7B8FD420' }]}
-            >
-              <Moon size={18} color="#7B8FD4" />
-            </View>
-            <View style={styles.cardTitleGroup}>
-              <Text variant="labelMedium" style={styles.cardTitle}>
-                Sleep Quality
-              </Text>
-              <Text variant="labelSmall" style={styles.cardSubtitle}>
-                7 days ago
-              </Text>
-            </View>
-            <Text
-              variant="labelSmall"
-              style={[
-                styles.statusBadge,
-                { backgroundColor: '#7B8FD420', color: '#7B8FD4' },
-              ]}
-            >
-              ● 7.2 jam
-            </Text>
-          </View>
-
-          <BarChart
-            data={sleepData}
-            width={280}
-            height={80}
-            barWidth={26}
-            spacing={12}
-            hideRules
-            hideAxesAndRules
-            barBorderRadius={6}
-            noOfSections={4}
-            maxValue={10}
-            yAxisThickness={0}
-            xAxisThickness={0}
-            isAnimated
-            showXAxisIndices
-            xAxisIndicesColor="transparent"
-          />
-
-          {/* Day labels */}
-          <View style={styles.dayLabels}>
-            {sleepDays.map(day => (
-              <Text key={day} variant="labelSmall" style={styles.dayLabel}>
-                {day}
-              </Text>
-            ))}
-          </View>
-
-          <View style={styles.metricRow}>
-            <View style={styles.metricItem}>
-              <Text variant="labelSmall" style={styles.metricLabel}>
-                Shortest
-              </Text>
-              <Text
-                variant="titleMedium"
-                style={[styles.metricVal, { color: C.redLight }]}
-              >
-                5.8
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                hours
-              </Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text variant="labelSmall" style={styles.metricLabel}>
-                Average
-              </Text>
-              <Text
-                variant="titleMedium"
-                style={[styles.metricVal, { color: '#7B8FD4' }]}
-              >
-                7.2
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                hours
-              </Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricItem}>
-              <Text variant="labelSmall" style={styles.metricLabel}>
-                Max
-              </Text>
-              <Text
-                variant="titleMedium"
-                style={[styles.metricVal, { color: '#27AE60' }]}
-              >
-                8.0
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                hours
-              </Text>
-            </View>
-          </View>
-        </Surface>
-
-        {/* ══════════════════════════════════════════
-            CARD 4 — IMT (Indeks Massa Tubuh)
-        ══════════════════════════════════════════ */}
-        <Surface style={styles.card} elevation={1}>
-          <View style={styles.cardHeader}>
-            <View
-              style={[
-                styles.cardIconWrapper,
-                { backgroundColor: C.secondary + '60' },
-              ]}
-            >
-              <Scale size={18} color="#4A7A6A" />
-            </View>
-            <View style={styles.cardTitleGroup}>
-              <Text variant="labelMedium" style={styles.cardTitle}>
-                BMI (Body Mass Index)
-              </Text>
-              <Text variant="labelSmall" style={styles.cardSubtitle}>
-                Based on profile data
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.imtRow}>
-            <View style={styles.imtLeft}>
-              <Text
-                variant="displaySmall"
-                style={[styles.imtValue, { color: bmiCategory.color }]}
-              >
-                {bmi}
-              </Text>
-              <Text variant="labelSmall" style={styles.metricUnit}>
-                kg/m²
-              </Text>
-              <View
-                style={[
-                  styles.pill,
-                  { backgroundColor: bmiCategory.color + '20', marginTop: 6 },
-                ]}
-              >
-                <Text
-                  variant="labelMedium"
-                  style={{ color: bmiCategory.color, fontWeight: '700' }}
-                >
-                  {bmiCategory.label}
+        {loading ? (
+          <ActivityIndicator color={C.primary} style={styles.loader} />
+        ) : (
+          <>
+            {/* ══ Heart Rate (static) ═══════════════════════════════ */}
+            <Surface style={styles.card} elevation={1}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIconWrapper, styles.iconHeart]}>
+                  <Heart size={18} color={C.orange} fill={C.orange} />
+                </View>
+                <View style={styles.cardTitleGroup}>
+                  <Text variant="labelMedium" style={styles.cardTitle}>Heart Rate</Text>
+                  <Text variant="labelSmall" style={styles.cardSubtitle}>7 days</Text>
+                </View>
+                <Text variant="labelSmall" style={[styles.statusBadge, styles.badgeOrange]}>
+                  ● 78 BPM
                 </Text>
               </View>
-            </View>
 
-            <View style={styles.imtRight}>
-              {/* BMI Scale Bar */}
-              <View style={styles.bmiScaleWrapper}>
-                <View style={styles.bmiScale}>
-                  <View
-                    style={[
-                      styles.bmiSegment,
-                      {
-                        flex: 1,
-                        backgroundColor: C.orange + '80',
-                        borderTopLeftRadius: 6,
-                        borderBottomLeftRadius: 6,
-                      },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.bmiSegment,
-                      { flex: 1.3, backgroundColor: '#27AE6080' },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.bmiSegment,
-                      { flex: 1, backgroundColor: C.orange + '80' },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.bmiSegment,
-                      {
-                        flex: 1.2,
-                        backgroundColor: C.redLight + '80',
-                        borderTopRightRadius: 6,
-                        borderBottomRightRadius: 6,
-                      },
-                    ]}
-                  />
+              <BarChart
+                data={staticHeartRateData}
+                width={280}
+                height={80}
+                barWidth={26}
+                spacing={12}
+                hideRules
+                hideAxesAndRules
+                barBorderRadius={6}
+                noOfSections={3}
+                maxValue={100}
+                yAxisThickness={0}
+                xAxisThickness={0}
+                isAnimated
+              />
+
+              <View style={styles.metricRow}>
+                <View style={styles.metricItem}>
+                  <Text variant="labelSmall" style={styles.metricLabel}>Min</Text>
+                  <Text variant="titleMedium" style={[styles.metricVal, styles.valPrimary]}>65</Text>
+                  <Text variant="labelSmall" style={styles.metricUnit}>bpm</Text>
                 </View>
-                {/* Indicator */}
-                <View
-                  style={[
-                    styles.bmiIndicator,
-                    { left: `${bmiPercent}%` as any },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.bmiDot,
-                      { backgroundColor: bmiCategory.color },
-                    ]}
-                  />
+                <View style={styles.metricDivider} />
+                <View style={styles.metricItem}>
+                  <Text variant="labelSmall" style={styles.metricLabel}>Average</Text>
+                  <Text variant="titleMedium" style={[styles.metricVal, styles.valOrange]}>72</Text>
+                  <Text variant="labelSmall" style={styles.metricUnit}>bpm</Text>
+                </View>
+                <View style={styles.metricDivider} />
+                <View style={styles.metricItem}>
+                  <Text variant="labelSmall" style={styles.metricLabel}>Max</Text>
+                  <Text variant="titleMedium" style={[styles.metricVal, styles.valRed]}>78</Text>
+                  <Text variant="labelSmall" style={styles.metricUnit}>bpm</Text>
                 </View>
               </View>
+            </Surface>
 
-              <View style={styles.bmiLabels}>
-                <Text variant="labelSmall" style={styles.bmiLabelText}>
-                  Underweight
-                </Text>
-                <Text variant="labelSmall" style={styles.bmiLabelText}>
-                  Normal
-                </Text>
-                <Text variant="labelSmall" style={styles.bmiLabelText}>
-                  Overweight
-                </Text>
-                <Text variant="labelSmall" style={styles.bmiLabelText}>
-                  Obesity
-                </Text>
-              </View>
+            {/* ══ HRV & Blood Pressure (row) ════════════════════════ */}
+            <View style={styles.row}>
+              {/* HRV */}
+              <Surface style={[styles.card, styles.halfCard]} elevation={1}>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.cardIconWrapper, styles.iconPrimary]}>
+                    <Activity size={16} color={C.primary} />
+                  </View>
+                  <Text variant="labelSmall" style={styles.cardTitle}>HRV</Text>
+                </View>
 
-              <View style={styles.bodyStats}>
-                <View style={styles.bodyStat}>
-                  <Text variant="labelSmall" style={styles.metricLabel}>
-                    Weight
-                  </Text>
-                  <Text variant="titleSmall" style={styles.bodyStatVal}>
-                    68 kg
+                <LineChart
+                  data={staticHrvData}
+                  width={110}
+                  height={55}
+                  color={C.primary}
+                  thickness={2}
+                  hideRules
+                  hideAxesAndRules
+                  dataPointsColor={C.primary}
+                  dataPointsRadius={3}
+                  isAnimated
+                  curved
+                  startFillColor={C.primary + '30'}
+                  endFillColor={C.primary + '05'}
+                  areaChart
+                />
+
+                <Text variant="headlineSmall" style={[styles.bigVal, styles.valPrimary]}>
+                  {latestHrv}{' '}
+                  <Text variant="labelSmall" style={styles.metricUnit}>ms</Text>
+                </Text>
+                <View style={[styles.pill, { backgroundColor: hrvStatus.color + '20' }]}>
+                  <Text variant="labelSmall" style={[styles.pillText, { color: hrvStatus.color }]}>
+                    {hrvStatus.label}
                   </Text>
                 </View>
-                <View style={styles.bodyStat}>
-                  <Text variant="labelSmall" style={styles.metricLabel}>
-                    Height
+              </Surface>
+
+              {/* Blood Pressure */}
+              <Surface style={[styles.card, styles.halfCard]} elevation={1}>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.cardIconWrapper, styles.iconRed]}>
+                    <Droplets size={16} color={C.redLight} />
+                  </View>
+                  <Text variant="labelSmall" style={styles.cardTitle}>Blood Pressure</Text>
+                </View>
+
+                {screening ? (
+                  <>
+                    <LineChart
+                      data={[{ value: screening.systolic }]}
+                      data2={[{ value: screening.diastolic }]}
+                      width={110}
+                      height={55}
+                      color={C.redLight}
+                      color2={C.orange}
+                      thickness={2}
+                      thickness2={2}
+                      hideRules
+                      hideAxesAndRules
+                      dataPointsColor={C.redLight}
+                      dataPointsColor2={C.orange}
+                      dataPointsRadius={4}
+                      isAnimated
+                    />
+                    <Text variant="titleLarge" style={styles.bpValue}>
+                      {screening.systolic}/{screening.diastolic}
+                    </Text>
+                    <Text variant="labelSmall" style={styles.metricUnit}>mmHg</Text>
+                    {bpStat && (
+                      <View style={[styles.pill, { backgroundColor: bpStat.color + '20' }]}>
+                        <Text variant="labelSmall" style={[styles.pillText, { color: bpStat.color }]}>
+                          {bpStat.label}
+                        </Text>
+                      </View>
+                    )}
+                  </>
+                ) : (
+                  <View style={styles.noDataSmall}>
+                    <Text variant="labelSmall" style={styles.metricUnit}>No data</Text>
+                  </View>
+                )}
+              </Surface>
+            </View>
+
+            {/* ══ Sleep ════════════════════════════════════════════════ */}
+            <Surface style={styles.card} elevation={1}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIconWrapper, styles.iconSleep]}>
+                  <Moon size={18} color="#7B8FD4" />
+                </View>
+                <View style={styles.cardTitleGroup}>
+                  <Text variant="labelMedium" style={styles.cardTitle}>Sleep Quality</Text>
+                  <Text variant="labelSmall" style={styles.cardSubtitle}>Last 7 days</Text>
+                </View>
+                {avgSleepHours && (
+                  <Text variant="labelSmall" style={[styles.statusBadge, styles.badgeSleep]}>
+                    ● {avgSleepHours} hrs avg
                   </Text>
-                  <Text variant="titleSmall" style={styles.bodyStatVal}>
-                    174 cm
+                )}
+              </View>
+
+              {sleepChartData.length > 0 ? (
+                <>
+                  <BarChart
+                    data={sleepChartData}
+                    width={280}
+                    height={80}
+                    barWidth={26}
+                    spacing={12}
+                    hideRules
+                    hideAxesAndRules
+                    barBorderRadius={6}
+                    noOfSections={4}
+                    maxValue={12}
+                    yAxisThickness={0}
+                    xAxisThickness={0}
+                    isAnimated
+                  />
+                  <View style={styles.dayLabels}>
+                    {(displaySleepDays.length > 0 ? displaySleepDays : sleepDays).map((day, i) => (
+                      <Text key={i} variant="labelSmall" style={styles.dayLabel}>{day}</Text>
+                    ))}
+                  </View>
+                  <View style={styles.metricRow}>
+                    <View style={styles.metricItem}>
+                      <Text variant="labelSmall" style={styles.metricLabel}>Shortest</Text>
+                      <Text variant="titleMedium" style={[styles.metricVal, styles.valRed]}>
+                        {(Math.min(...sleepHistory.map(s => s.duration_minutes)) / 60).toFixed(1)}
+                      </Text>
+                      <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
+                    </View>
+                    <View style={styles.metricDivider} />
+                    <View style={styles.metricItem}>
+                      <Text variant="labelSmall" style={styles.metricLabel}>Average</Text>
+                      <Text variant="titleMedium" style={[styles.metricVal, styles.valSleep]}>
+                        {avgSleepHours}
+                      </Text>
+                      <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
+                    </View>
+                    <View style={styles.metricDivider} />
+                    <View style={styles.metricItem}>
+                      <Text variant="labelSmall" style={styles.metricLabel}>Best</Text>
+                      <Text variant="titleMedium" style={[styles.metricVal, styles.valGreen]}>
+                        {(Math.max(...sleepHistory.map(s => s.duration_minutes)) / 60).toFixed(1)}
+                      </Text>
+                      <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
+                    </View>
+                  </View>
+                </>
+              ) : (
+                <View style={styles.noDataBox}>
+                  <Text variant="bodySmall" style={styles.noDataText}>No sleep data this week.</Text>
+                </View>
+              )}
+            </Surface>
+
+            {/* ══ BMI ══════════════════════════════════════════════════ */}
+            <Surface style={styles.card} elevation={1}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIconWrapper, styles.iconBmi]}>
+                  <Scale size={18} color="#4A7A6A" />
+                </View>
+                <View style={styles.cardTitleGroup}>
+                  <Text variant="labelMedium" style={styles.cardTitle}>BMI (Body Mass Index)</Text>
+                  <Text variant="labelSmall" style={styles.cardSubtitle}>
+                    {screening ? 'From latest screening' : 'No screening data'}
                   </Text>
                 </View>
               </View>
-            </View>
-          </View>
-        </Surface>
 
-        {/* <Text variant="titleMedium" style={styles.sectionTitle}>
-          Features
-        </Text>
-        <View style={styles.menuGrid}>
-          {menuItems.map(item => (
-            <TouchableOpacity
-              key={item.label}
-              style={[styles.menuItem, { backgroundColor: item.color + '15' }]}
-              onPress={() => navigation.navigate(item.screen)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.menuIconWrapper,
-                  { backgroundColor: item.color + '25' },
-                ]}
-              >
-                <Text style={styles.menuIcon}>{item.icon}</Text>
+              {screening && bmiNum ? (
+                <View style={styles.imtRow}>
+                  <View style={styles.imtLeft}>
+                    <Text variant="displaySmall" style={[styles.imtValue, { color: bmiCategory.color }]}>
+                      {screening.bmi}
+                    </Text>
+                    <Text variant="labelSmall" style={styles.metricUnit}>kg/m²</Text>
+                    <View style={[styles.pill, styles.pillTop, { backgroundColor: bmiCategory.color + '20' }]}>
+                      <Text variant="labelMedium" style={[styles.pillText, { color: bmiCategory.color }]}>
+                        {bmiCategory.label}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.imtRight}>
+                    <View style={styles.bmiScaleWrapper}>
+                      <View style={styles.bmiScale}>
+                        <View style={[styles.bmiSegment, styles.bmiUnderweight]} />
+                        <View style={[styles.bmiSegment, styles.bmiNormal]} />
+                        <View style={[styles.bmiSegment, styles.bmiOverweight]} />
+                        <View style={[styles.bmiSegment, styles.bmiObese]} />
+                      </View>
+                      <View style={[styles.bmiIndicator, { left: `${bmiPercent}%` as any }]}>
+                        <View style={[styles.bmiDot, { backgroundColor: bmiCategory.color }]} />
+                      </View>
+                    </View>
+                    <View style={styles.bmiLabels}>
+                      <Text variant="labelSmall" style={styles.bmiLabelText}>Under</Text>
+                      <Text variant="labelSmall" style={styles.bmiLabelText}>Normal</Text>
+                      <Text variant="labelSmall" style={styles.bmiLabelText}>Over</Text>
+                      <Text variant="labelSmall" style={styles.bmiLabelText}>Obese</Text>
+                    </View>
+                    <View style={styles.bodyStats}>
+                      <View style={styles.bodyStat}>
+                        <Text variant="labelSmall" style={styles.metricLabel}>Weight</Text>
+                        <Text variant="titleSmall" style={styles.bodyStatVal}>{screening.weight_kg} kg</Text>
+                      </View>
+                      <View style={styles.bodyStat}>
+                        <Text variant="labelSmall" style={styles.metricLabel}>Height</Text>
+                        <Text variant="titleSmall" style={styles.bodyStatVal}>{screening.height_cm} cm</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.noDataBox}>
+                  <Text variant="bodySmall" style={styles.noDataText}>Complete a screening to see your BMI.</Text>
+                </View>
+              )}
+            </Surface>
+
+            {/* ══ Mental Health (PHQ-9) ════════════════════════════════ */}
+            <Surface style={styles.card} elevation={1}>
+              <View style={styles.cardHeader}>
+                <View style={[styles.cardIconWrapper, styles.iconMental]}>
+                  <Brain size={18} color="#7B8FD4" />
+                </View>
+                <View style={styles.cardTitleGroup}>
+                  <Text variant="labelMedium" style={styles.cardTitle}>Mental Health</Text>
+                  <Text variant="labelSmall" style={styles.cardSubtitle}>PHQ-9 Depression Scale</Text>
+                </View>
+                {phqSev && (
+                  <View style={[styles.statusBadgeView, { backgroundColor: phqSev.bg }]}>
+                    <Text variant="labelSmall" style={[styles.pillText, { color: phqSev.color }]}>
+                      {phqSev.label}
+                    </Text>
+                  </View>
+                )}
               </View>
-              <Text
-                variant="labelSmall"
-                style={[styles.menuLabel, { color: item.color }]}
-              >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View> */}
 
-        <View style={{ height: 100 }} />
+              {screening ? (
+                <View style={styles.phq9Row}>
+                  <Text variant="displaySmall" style={[styles.phq9Score, { color: phqSev?.color }]}>
+                    {screening.phq9_score}
+                  </Text>
+                  <View style={styles.phq9Info}>
+                    <Text variant="bodySmall" style={styles.metricLabel}>out of 27</Text>
+                    <ProgressBar
+                      progress={screening.phq9_score / 27}
+                      color={phqSev?.color}
+                      style={styles.phq9Bar}
+                    />
+                    <Text variant="labelSmall" style={styles.metricUnit}>
+                      {phqSev?.label} severity
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.noDataBox}>
+                  <Text variant="bodySmall" style={styles.noDataText}>Complete a screening to see your mental health score.</Text>
+                </View>
+              )}
+            </Surface>
+
+            {/* ══ Mental Status (AI) ═══════════════════════════════════ */}
+            {latestMental && (
+              <Surface style={styles.card} elevation={1}>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.cardIconWrapper, { backgroundColor: getRiskColor(latestMental.risk_level) + '20' }]}>
+                    <Brain size={18} color={getRiskColor(latestMental.risk_level)} />
+                  </View>
+                  <View style={styles.cardTitleGroup}>
+                    <Text variant="labelMedium" style={styles.cardTitle}>Mental Status</Text>
+                    <Text variant="labelSmall" style={styles.cardSubtitle}>AI Assessment</Text>
+                  </View>
+                  <View style={[styles.statusBadgeView, { backgroundColor: getRiskColor(latestMental.risk_level) + '20' }]}>
+                    <Text variant="labelSmall" style={[styles.pillText, { color: getRiskColor(latestMental.risk_level) }]}>
+                      {latestMental.risk_level} risk
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.mentalRow}>
+                  <View style={styles.mentalScoreWrap}>
+                    <Text variant="headlineMedium" style={[styles.mentalScore, { color: getRiskColor(latestMental.risk_level) }]}>
+                      {latestMental.risk_score}
+                    </Text>
+                    <Text variant="labelSmall" style={styles.metricUnit}>/ 100</Text>
+                  </View>
+                  <View style={styles.mentalInfo}>
+                    {latestMental.detected_emotion ? (
+                      <Text variant="bodySmall" style={styles.mentalEmotion}>
+                        {latestMental.detected_emotion}
+                      </Text>
+                    ) : null}
+                    {latestMental.summary_note ? (
+                      <Text variant="bodySmall" style={styles.mentalNote} numberOfLines={2}>
+                        {latestMental.summary_note}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+              </Surface>
+            )}
+
+            <View style={styles.bottomSpacer} />
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+export default HomeScreen;
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 12 },
+  loader: { marginTop: 60 },
 
   header: {
     flexDirection: 'row',
@@ -673,13 +627,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  welcomeText: { color: C.textMuted },
-  userName: { fontWeight: '700', color: C.text },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
   iconButton: {
     backgroundColor: C.card,
     borderRadius: 20,
-    margin: 0,
     padding: 8,
   },
   notifBadge: {
@@ -690,14 +641,11 @@ const styles = StyleSheet.create({
   },
 
   sectionHeader: { marginBottom: 16 },
+  welcomeRow: { flexDirection: 'row', alignItems: 'center' },
+  welcomeText: { color: C.textMuted },
+  userName: { fontWeight: '700', color: C.text },
   overviewTitle: { fontWeight: '800', color: C.text, letterSpacing: -0.5 },
   overviewSub: { color: C.textMuted, marginTop: 2 },
-  sectionTitle: {
-    fontWeight: '700',
-    color: C.text,
-    marginBottom: 12,
-    marginTop: 4,
-  },
 
   card: {
     backgroundColor: C.card,
@@ -724,6 +672,16 @@ const styles = StyleSheet.create({
   cardTitleGroup: { flex: 1 },
   cardTitle: { fontWeight: '700', color: C.text },
   cardSubtitle: { color: C.textMuted, marginTop: 1 },
+
+  // Icon backgrounds
+  iconHeart:   { backgroundColor: C.orangeLight },
+  iconPrimary: { backgroundColor: C.primary + '20' },
+  iconRed:     { backgroundColor: C.redLight + '20' },
+  iconSleep:   { backgroundColor: '#7B8FD420' },
+  iconBmi:     { backgroundColor: C.secondary + '60' },
+  iconMental:  { backgroundColor: '#7B8FD420' },
+
+  // Badges
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -731,6 +689,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     overflow: 'hidden',
   },
+  statusBadgeView: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  badgeOrange: { backgroundColor: C.orangeLight, color: C.orange },
+  badgeSleep:  { backgroundColor: '#7B8FD420',   color: '#7B8FD4' },
 
   metricRow: {
     flexDirection: 'row',
@@ -745,15 +710,25 @@ const styles = StyleSheet.create({
   metricVal: { fontWeight: '800' },
   metricUnit: { color: C.textMuted },
 
+  // Color helpers
+  valPrimary: { color: C.primary },
+  valOrange:  { color: C.orange },
+  valRed:     { color: C.redLight },
+  valGreen:   { color: '#27AE60' },
+  valSleep:   { color: '#7B8FD4' },
+
   bigVal: { fontWeight: '800', marginTop: 8 },
+  pillText: { fontWeight: '700' },
 
   pill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 20,
-    marginTop: 6,
   },
+  pillTop: { marginTop: 6 },
+
+  bpValue: { color: C.redLight, fontWeight: '800', marginTop: 4 },
 
   dayLabels: {
     flexDirection: 'row',
@@ -763,6 +738,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: { color: C.textMuted, flex: 1, textAlign: 'center' },
 
+  // BMI
   imtRow: { flexDirection: 'row', gap: 16, alignItems: 'flex-start' },
   imtLeft: { alignItems: 'flex-start' },
   imtValue: { fontWeight: '900', letterSpacing: -1 },
@@ -770,11 +746,21 @@ const styles = StyleSheet.create({
   bmiScaleWrapper: { position: 'relative', marginBottom: 4 },
   bmiScale: { flexDirection: 'row', height: 10, borderRadius: 6 },
   bmiSegment: { height: 10 },
-  bmiIndicator: {
-    position: 'absolute',
-    top: -4,
-    marginLeft: -8,
+  bmiUnderweight: {
+    flex: 1,
+    backgroundColor: C.orange + '80',
+    borderTopLeftRadius: 6,
+    borderBottomLeftRadius: 6,
   },
+  bmiNormal:      { flex: 1.3, backgroundColor: '#27AE6080' },
+  bmiOverweight:  { flex: 1,   backgroundColor: C.orange + '80' },
+  bmiObese: {
+    flex: 1.2,
+    backgroundColor: C.redLight + '80',
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  bmiIndicator: { position: 'absolute', top: -4, marginLeft: -8 },
   bmiDot: {
     width: 18,
     height: 18,
@@ -798,32 +784,24 @@ const styles = StyleSheet.create({
   bodyStat: {},
   bodyStatVal: { fontWeight: '700', color: C.text },
 
-  menuGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 12,
-  },
-  menuItem: {
-    width: '30%',
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    gap: 8,
-  },
-  menuIconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuIcon: { fontSize: 24 },
-  menuLabel: {
-    fontWeight: '600',
-    textAlign: 'center',
-    fontSize: 11,
-  },
-});
+  // PHQ-9
+  phq9Row: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  phq9Score: { fontWeight: '900', letterSpacing: -1 },
+  phq9Info: { flex: 1, gap: 6 },
+  phq9Bar: { height: 8, borderRadius: 4, marginTop: 4 },
 
-export default HomeScreen;
+  // Mental status AI
+  mentalRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 16 },
+  mentalScoreWrap: { alignItems: 'center' },
+  mentalScore: { fontWeight: '900', letterSpacing: -1 },
+  mentalInfo: { flex: 1, gap: 4 },
+  mentalEmotion: { color: C.text, fontWeight: '600' },
+  mentalNote: { color: C.textMuted, lineHeight: 18 },
+
+  // Empty / no-data
+  noDataBox: { paddingVertical: 20, alignItems: 'center' },
+  noDataSmall: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
+  noDataText: { color: C.textMuted },
+
+  bottomSpacer: { height: 100 },
+});

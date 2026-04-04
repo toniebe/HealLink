@@ -3,7 +3,6 @@ import {
   Home,
   ClipboardList,
   Stethoscope,
-  User2,
 } from 'lucide-react-native';
 import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
 import { C } from '../helper/theme';
@@ -16,10 +15,8 @@ export const BottomTabBar: React.FC<{state: any; navigation: any}> = ({
 }) => {
   const tabs = [
     {name: 'Home', icon: Home, label: 'Home'},
-  
     {name: 'Screening', icon: ClipboardList, label: 'Screening'},
-    {name: 'Telemedicine', icon: Stethoscope, label: 'Telemedicine'},
-    {name: 'Profile', icon: User2, label: 'Profile'},
+    {name: 'TelemedicineHome', icon: Stethoscope, label: 'Telemedicine'},
   ];
 
   return (

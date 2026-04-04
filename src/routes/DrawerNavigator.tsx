@@ -11,12 +11,12 @@ import {
   TrendingUp,
   BookHeart,
   Bell,
-  Settings,
   LogOut,
   ChevronRight,
   X,
   Menu,
   Home,
+  User2,
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { authStore } from '../store/authStore';
@@ -27,7 +27,7 @@ import AIChatScreen from '../screen/AIChat';
 import TrendScreen from '../screen/Tren';
 import MoodJournalScreen from '../screen/Journal';
 import InsightScreen from '../screen/Insight';
-import SettingsScreen from '../screen/Setting';
+import ProfileScreen from '../screen/Profile';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 
 export type DrawerParamList = {
@@ -36,6 +36,7 @@ export type DrawerParamList = {
   Tren: undefined;
   MoodJournal: undefined;
   Insight: undefined;
+  Profile: undefined;
   Settings: undefined;
 };
 
@@ -71,10 +72,10 @@ const drawerMenuItems = [
     color: C.orange,
   },
   {
-    name: 'Settings' as keyof DrawerParamList,
-    label: 'Settings & Privacy',
-    Icon: Settings,
-    color: C.textMuted,
+    name: 'Profile' as keyof DrawerParamList,
+    label: 'Profile',
+    Icon: User2,
+    color: C.primary,
   },
 ];
 
@@ -113,7 +114,11 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = props => {
         contentContainerStyle={styles.scrollContent}
       >
         {/* User Profile Section */}
-        <View style={styles.profileSection}>
+        <TouchableOpacity
+          style={styles.profileSection}
+          onPress={() => props.navigation.navigate('Profile')}
+          activeOpacity={0.8}
+        >
           <View style={styles.avatarWrapper}>
             <Text style={styles.avatarText}>{initial}</Text>
           </View>
@@ -130,7 +135,8 @@ const CustomDrawerContent: React.FC<DrawerContentComponentProps> = props => {
               </Text>
             </View>
           </View>
-        </View>
+          <ChevronRight size={16} color={C.textMuted} />
+        </TouchableOpacity>
 
         <View style={styles.divider} />
 
@@ -256,7 +262,7 @@ const DrawerNavigator: React.FC = () => {
       <Drawer.Screen name="Tren" component={TrendScreen} />
       <Drawer.Screen name="MoodJournal" component={MoodJournalScreen} />
       <Drawer.Screen name="Insight" component={InsightScreen} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen name="Profile" component={ProfileScreen} />
     </Drawer.Navigator>
   );
 };
