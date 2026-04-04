@@ -41,10 +41,7 @@
       android:supportsRtl="true">
 
 
-     <!-- Notifee -->
-      <service
-      android:name="io.invertase.notifee.NotifeeApiModule"
-      android:exported="false" />
+  
       <service
           android:name="com.wearconnectivity.WearConnectivityTask"
           android:exported="false"

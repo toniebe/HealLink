@@ -94,6 +94,12 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+         release {
+            storeFile file(HEALINK_STORE_FILE)
+            storePassword HEALINK_STORE_PASSWORD
+            keyAlias HEALINK_KEY_ALIAS
+            keyPassword HEALINK_KEY_PASSWORD
+        }   
     }
     buildTypes {
         debug {
