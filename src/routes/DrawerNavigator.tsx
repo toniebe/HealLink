@@ -16,7 +16,6 @@ import {
   X,
   Menu,
   Home,
-  User2,
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { authStore } from '../store/authStore';
@@ -71,12 +70,7 @@ const drawerMenuItems = [
     Icon: Bell,
     color: C.orange,
   },
-  {
-    name: 'Profile' as keyof DrawerParamList,
-    label: 'Profile',
-    Icon: User2,
-    color: C.primary,
-  },
+
 ];
 
 // ── Custom Drawer Content ─────────────────────────────────────────────────────
