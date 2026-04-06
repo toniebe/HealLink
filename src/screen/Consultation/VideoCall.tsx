@@ -18,38 +18,38 @@ import {
   useCallStateHooks,
   CallingState,
 } from '@stream-io/video-react-native-sdk';
-import {
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  PhoneOff,
-  Volume2,
-  VolumeX,
-  MessageSquare,
-} from 'lucide-react-native';
+// import {
+//   Mic,
+//   MicOff,
+//   Video,
+//   VideoOff,
+//   PhoneOff,
+//   Volume2,
+//   VolumeX,
+//   MessageSquare,
+// } from 'lucide-react-native';
 import { C } from '../../helper/theme';
-import { authStore } from '../../store/authStore';
-import { post } from '../../helper/apiHelper';
+// import { authStore } from '../../store/authStore';
+import { patch } from '../../helper/apiHelper';
 import { ConsultationResponse } from '../../types/telemedicineTypes';
 
 const STREAM_API_KEY = 'h8mvv4hyh5tn';
 const STREAM_USER_ID = 'ahmad59';
 const STREAM_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWhtYWQ1OSIsImlzcyI6Img4bXZ2NGh5aDV0biIsInN1YiI6InVzZXIvYWhtYWQ1OSIsImlhdCI6MTc3NTMxNDc4NiwiZXhwIjoxNzc3OTA2Nzg2fQ.r6ONxN59zOxjgMgOUT4hsujK-m_6fP6p79NHVjcJmPc';
-const USE_DEV_TOKEN = false;
+// const USE_DEV_TOKEN = false;
 
-/** Generate a Stream dev token (no signature — for testing only). */
-const devToken = (userId: string): string => {
-  const b64 = (obj: object) =>
-    btoa(JSON.stringify(obj))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({
-    user_id: userId,
-  })}.devToken`;
-};
+// /** Generate a Stream dev token (no signature — for testing only). */
+// const devToken = (userId: string): string => {
+//   const b64 = (obj: object) =>
+//     btoa(JSON.stringify(obj))
+//       .replace(/\+/g, '-')
+//       .replace(/\//g, '_')
+//       .replace(/=/g, '');
+//   return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({
+//     user_id: userId,
+//   })}.devToken`;
+// };
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ── Mood Config ───────────────────────────────────────────────────────────────
@@ -89,75 +89,75 @@ const triggerCallNotification = async (medicName: string) => {
 
 // ── Custom Controls ───────────────────────────────────────────────────────────
 
-const CustomControls: React.FC<{ onEndCall: () => void }> = ({ onEndCall }) => {
-  const { useMicrophoneState, useCameraState, useSpeakerState } =
-    useCallStateHooks();
+// const CustomControls: React.FC<{ onEndCall: () => void }> = ({ onEndCall }) => {
+//   const { useMicrophoneState, useCameraState, useSpeakerState } =
+//     useCallStateHooks();
 
-  const { microphone, isMute: isMicMuted } = useMicrophoneState();
-  const { camera, isMute: isCamMuted } = useCameraState();
-  const { speaker } = useSpeakerState();
-  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+//   const { microphone, isMute: isMicMuted } = useMicrophoneState();
+//   const { camera, isMute: isCamMuted } = useCameraState();
+//   const { speaker } = useSpeakerState();
+//   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
 
-  return (
-    <View style={styles.controlRow}>
-      {/* Mic */}
-      <TouchableOpacity
-        style={[styles.controlBtn, isMicMuted && styles.controlBtnOff]}
-        onPress={() => microphone.toggle()}
-        activeOpacity={0.8}
-      >
-        {isMicMuted ? (
-          <MicOff size={22} color="#FFF" />
-        ) : (
-          <Mic size={22} color="#FFF" />
-        )}
-      </TouchableOpacity>
+//   return (
+//     <View style={styles.controlRow}>
+//       {/* Mic */}
+//       <TouchableOpacity
+//         style={[styles.controlBtn, isMicMuted && styles.controlBtnOff]}
+//         onPress={() => microphone.toggle()}
+//         activeOpacity={0.8}
+//       >
+//         {isMicMuted ? (
+//           <MicOff size={22} color="#FFF" />
+//         ) : (
+//           <Mic size={22} color="#FFF" />
+//         )}
+//       </TouchableOpacity>
 
-      {/* Camera */}
-      <TouchableOpacity
-        style={[styles.controlBtn, isCamMuted && styles.controlBtnOff]}
-        onPress={() => camera.toggle()}
-        activeOpacity={0.8}
-      >
-        {isCamMuted ? (
-          <VideoOff size={22} color="#FFF" />
-        ) : (
-          <Video size={22} color="#FFF" />
-        )}
-      </TouchableOpacity>
+//       {/* Camera */}
+//       <TouchableOpacity
+//         style={[styles.controlBtn, isCamMuted && styles.controlBtnOff]}
+//         onPress={() => camera.toggle()}
+//         activeOpacity={0.8}
+//       >
+//         {isCamMuted ? (
+//           <VideoOff size={22} color="#FFF" />
+//         ) : (
+//           <Video size={22} color="#FFF" />
+//         )}
+//       </TouchableOpacity>
 
-      {/* Speaker */}
-      <TouchableOpacity
-        style={[styles.controlBtn, !isSpeakerOn && styles.controlBtnOff]}
-        onPress={() => {
-          speaker.select(isSpeakerOn ? 'earpiece' : 'speaker');
-          setIsSpeakerOn(prev => !prev);
-        }}
-        activeOpacity={0.8}
-      >
-        {isSpeakerOn ? (
-          <Volume2 size={22} color="#FFF" />
-        ) : (
-          <VolumeX size={22} color="#FFF" />
-        )}
-      </TouchableOpacity>
+//       {/* Speaker */}
+//       <TouchableOpacity
+//         style={[styles.controlBtn, !isSpeakerOn && styles.controlBtnOff]}
+//         onPress={() => {
+//           speaker.select(isSpeakerOn ? 'earpiece' : 'speaker');
+//           setIsSpeakerOn(prev => !prev);
+//         }}
+//         activeOpacity={0.8}
+//       >
+//         {isSpeakerOn ? (
+//           <Volume2 size={22} color="#FFF" />
+//         ) : (
+//           <VolumeX size={22} color="#FFF" />
+//         )}
+//       </TouchableOpacity>
 
-      {/* Chat — placeholder */}
-      <TouchableOpacity style={styles.controlBtn} activeOpacity={0.8}>
-        <MessageSquare size={22} color="#FFF" />
-      </TouchableOpacity>
+//       {/* Chat — placeholder */}
+//       <TouchableOpacity style={styles.controlBtn} activeOpacity={0.8}>
+//         <MessageSquare size={22} color="#FFF" />
+//       </TouchableOpacity>
 
-      {/* End Call */}
-      <TouchableOpacity
-        style={styles.endCallBtn}
-        onPress={onEndCall}
-        activeOpacity={0.8}
-      >
-        <PhoneOff size={22} color="#FFF" />
-      </TouchableOpacity>
-    </View>
-  );
-};
+//       {/* End Call */}
+//       <TouchableOpacity
+//         style={styles.endCallBtn}
+//         onPress={onEndCall}
+//         activeOpacity={0.8}
+//       >
+//         <PhoneOff size={22} color="#FFF" />
+//       </TouchableOpacity>
+//     </View>
+//   );
+// };
 
 // ── Call Inner ────────────────────────────────────────────────────────────────
 
@@ -263,7 +263,7 @@ const VideoCallScreen: React.FC = () => {
   const route = useRoute<any>();
   const { consultationId, medic } = route.params;
 
-  const user = authStore.getUser();
+  // const user = authStore.getUser();
 
   const [client, setClient] = useState<StreamVideoClient | null>(null);
   const [call, setCall] = useState<any>(null);
@@ -332,7 +332,7 @@ const VideoCallScreen: React.FC = () => {
       }
       notifee.cancelAllNotifications();
     };
-  }, []);
+  }, [medic?.name, navigation]);
 
   // ── End Call ──────────────────────────────────────────────────────────────────
 
@@ -345,7 +345,7 @@ const VideoCallScreen: React.FC = () => {
         onPress: async () => {
           try {
             await call?.leave();
-            await post<ConsultationResponse>(
+            await patch<ConsultationResponse>(
               `/consultations/${consultationId}/complete`,
               {},
             );

@@ -32,6 +32,15 @@ export const put = async <T>(endpoint: string, body: Record<string, any> = {}): 
   }
 };
 
+export const patch = async <T>(endpoint: string, body: Record<string, any> = {}): Promise<ApiResponse<T>> => {
+  try {
+    const response = await api.patch<T>(endpoint, body);
+    return { data: response as T, error: null };
+  } catch (error: any) {
+    return { data: null, error };
+  }
+};
+
 export const del = async <T>(endpoint: string): Promise<ApiResponse<T>> => {
   try {
     const response = await api.delete<T>(endpoint);

@@ -22,7 +22,7 @@ import {
 } from 'lucide-react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import notifee, {AndroidImportance} from '@notifee/react-native';
-import {get, post} from '../../helper/apiHelper';
+import {get, patch, } from '../../helper/apiHelper';
 import {C} from '../../helper/theme';
 import { Consultation, ConsultationResponse, statusConfig } from '../../types/telemedicineTypes';
 
@@ -91,7 +91,7 @@ const ConsultationDetailScreen: React.FC = () => {
     if (!consultation) {return;}
     setActionLoading('start');
 
-    const {data, error} = await post<ConsultationResponse>(
+    const {data, error} = await patch<ConsultationResponse>(
       `/consultations/${consultation.uuid}/start`,
       {},
     );
@@ -132,7 +132,7 @@ const ConsultationDetailScreen: React.FC = () => {
     if (!consultation) {return;}
     setActionLoading('cancel');
 
-    const {data, error} = await post<ConsultationResponse>(
+    const {data, error} = await patch<ConsultationResponse>(
       `/consultations/${consultation.uuid}/cancel`,
       {},
     );
@@ -156,7 +156,7 @@ const ConsultationDetailScreen: React.FC = () => {
     if (!consultation) {return;}
     setActionLoading('complete');
 
-    const {data, error} = await post<ConsultationResponse>(
+    const {data, error} = await patch<ConsultationResponse>(
       `/consultations/${consultation.uuid}/complete`,
       {},
     );
@@ -201,11 +201,11 @@ const ConsultationDetailScreen: React.FC = () => {
   }
 
   const medic = consultation.medic as any;
-  const status = statusConfig[consultation.status] ?? statusConfig.scheduled;
+  const status = statusConfig[consultation.status] ?? statusConfig.pending;
   const scheduledDate = new Date(consultation.scheduled_at);
 
-  const canStart = consultation.status === 'scheduled' || consultation.status === 'in_queue';
-  const canCancel = consultation.status === 'scheduled';
+  const canStart = consultation.status === 'pending';
+  const canCancel = consultation.status === 'pending';
   const canComplete = consultation.status === 'ongoing';
 
   return (

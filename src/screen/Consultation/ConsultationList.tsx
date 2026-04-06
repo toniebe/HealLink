@@ -10,7 +10,7 @@ import {C} from '../../helper/theme';
 import { Consultation, ConsultationListResponse, statusConfig } from '../../types/telemedicineTypes';
 
 const STATUS_TABS = [
-  {key: 'scheduled', label: 'Upcoming'},
+  {key: 'pending', label: 'Upcoming'},
   {key: 'ongoing',   label: 'Ongoing'},
   {key: 'completed', label: 'Done'},
   {key: 'cancelled', label: 'Cancelled'},
@@ -19,7 +19,7 @@ const STATUS_TABS = [
 const ConsultationListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const [activeTab, setActiveTab] = useState(route.params?.status ?? 'scheduled');
+  const [activeTab, setActiveTab] = useState(route.params?.status ?? 'pending');
   const [data, setData] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
 

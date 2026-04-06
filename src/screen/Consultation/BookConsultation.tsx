@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   ScrollView,
@@ -6,25 +6,16 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Text, Surface} from 'react-native-paper';
-import {ArrowLeft, User, Check, Calendar, Clock} from 'lucide-react-native';
+import {ArrowLeft, User, Check, Calendar, Clock, Search} from 'lucide-react-native';
 import {useNavigation} from '@react-navigation/native';
 import notifee, {AndroidImportance} from '@notifee/react-native';
-import { ConsultationResponse } from '../../types/telemedicineTypes';
-import { post } from '../../helper/apiHelper';
-import { C } from '../../helper/theme';
-
-
-// ── Mock Medics — replace dengan API GET /medics ──────────────────────────────
-
-const mockMedics = [
-  {uuid: 'medic-1', name: 'dr. Sarah Adeline, Sp.KJ', specialty: 'Psychiatrist',    available: true},
-  {uuid: 'medic-2', name: 'dr. Budi Setiawan',         specialty: 'Psychologist',    available: true},
-  {uuid: 'medic-3', name: 'dr. Sera Abling',           specialty: 'Therapist',       available: false},
-  {uuid: 'medic-4', name: 'dr. Dortes Mareina',        specialty: 'Therapist',       available: true},
-];
+import {ConsultationResponse, MedicUser, MedicsListResponse} from '../../types/telemedicineTypes';
+import {get, post} from '../../helper/apiHelper';
+import {C} from '../../helper/theme';
 
 // ── Time Slots ────────────────────────────────────────────────────────────────
 
@@ -75,10 +66,37 @@ const sendBookingNotification = async (medicName: string, scheduledAt: string) =
 const BookConsultationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
 
-  const [selectedMedic, setSelectedMedic] = useState<typeof mockMedics[0] | null>(null);
+  const [medics, setMedics] = useState<MedicUser[]>([]);
+  const [medicsLoading, setMedicsLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [selectedMedic, setSelectedMedic] = useState<MedicUser | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(availableDates[0]);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [loading, setLoading] = useState(false);
+
+  const fetchMedics = useCallback(async (q: string) => {
+    setMedicsLoading(true);
+    const params: Record<string, any> = {};
+    if (q.trim()) { params.search = q.trim(); }
+    const {data, error} = await get<MedicsListResponse>('/medics', params);
+    setMedicsLoading(false);
+    if (!error && data?.success) {
+      setMedics(data.data);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMedics('');
+  }, [fetchMedics]);
+
+  const onSearchChange = (text: string) => {
+    setSearch(text);
+    setSelectedMedic(null);
+    if (searchTimer.current) { clearTimeout(searchTimer.current); }
+    searchTimer.current = setTimeout(() => fetchMedics(text), 400);
+  };
 
   const handleBook = async () => {
     if (!selectedMedic) {
@@ -148,58 +166,77 @@ const BookConsultationScreen: React.FC = () => {
         <Text variant="titleSmall" style={styles.stepTitle}>
           1. Select Doctor
         </Text>
-        <View style={styles.medicGrid}>
-          {mockMedics.map(medic => {
-            const isSelected = selectedMedic?.uuid === medic.uuid;
-            return (
-              <TouchableOpacity
-                key={medic.uuid}
-                style={[
-                  styles.medicCard,
-                  isSelected && styles.medicCardSelected,
-                  !medic.available && styles.medicCardDisabled,
-                ]}
-                onPress={() => medic.available && setSelectedMedic(medic)}
-                activeOpacity={medic.available ? 0.75 : 1}>
-                <View style={styles.medicAvatar}>
-                  <User size={22} color={isSelected ? '#FFF' : C.primary} />
-                </View>
-                <Text
-                  variant="labelMedium"
-                  style={[styles.medicName, isSelected && {color: '#FFF'}]}
-                  numberOfLines={2}>
-                  {medic.name}
-                </Text>
-                <Text
-                  variant="labelSmall"
-                  style={[styles.medicSpec, isSelected && {color: 'rgba(255,255,255,0.8)'}]}>
-                  {medic.specialty}
-                </Text>
 
-                <View style={[
-                  styles.availBadge,
-                  {backgroundColor: medic.available ? '#27AE6020' : '#88888820'},
-                ]}>
+        {/* Search */}
+        <View style={styles.searchWrapper}>
+          <Search size={16} color={C.textMuted} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search doctor..."
+            placeholderTextColor={C.textMuted}
+            value={search}
+            onChangeText={onSearchChange}
+          />
+        </View>
+
+        {medicsLoading ? (
+          <ActivityIndicator color={C.primary} style={styles.medicsLoader} />
+        ) : (
+          <View style={styles.medicGrid}>
+            {medics.map(medic => {
+              const isSelected = selectedMedic?.uuid === medic.uuid;
+              const available = medic.is_active;
+              return (
+                <TouchableOpacity
+                  key={medic.uuid}
+                  style={[
+                    styles.medicCard,
+                    isSelected && styles.medicCardSelected,
+                    !available && styles.medicCardDisabled,
+                  ]}
+                  onPress={() => available && setSelectedMedic(medic)}
+                  activeOpacity={available ? 0.75 : 1}>
+                  <View style={styles.medicAvatar}>
+                    <User size={22} color={isSelected ? '#FFF' : C.primary} />
+                  </View>
+                  <Text
+                    variant="labelMedium"
+                    style={[styles.medicName, isSelected && styles.textWhite]}
+                    numberOfLines={2}>
+                    {medic.name}
+                  </Text>
                   <Text
                     variant="labelSmall"
-                    style={{
-                      color: medic.available ? '#27AE60' : '#888888',
-                      fontWeight: '700',
-                      fontSize: 10,
-                    }}>
-                    {medic.available ? 'Available' : 'Unavailable'}
+                    style={[styles.medicSpec, isSelected && styles.textWhiteMuted]}>
+                    {medic.role}
                   </Text>
-                </View>
 
-                {isSelected && (
-                  <View style={styles.selectedCheck}>
-                    <Check size={12} color={C.primary} />
+                  <View style={[
+                    styles.availBadge,
+                    available ? styles.availBadgeOn : styles.availBadgeOff,
+                  ]}>
+                    <Text
+                      variant="labelSmall"
+                      style={available ? styles.availTextOn : styles.availTextOff}>
+                      {available ? 'Available' : 'Unavailable'}
+                    </Text>
                   </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+
+                  {isSelected && (
+                    <View style={styles.selectedCheck}>
+                      <Check size={12} color={C.primary} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+            {medics.length === 0 && (
+              <Text variant="bodySmall" style={styles.emptyText}>
+                No doctors found.
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* ── Step 2 — Select Date ── */}
         <Text variant="titleSmall" style={styles.stepTitle}>
@@ -349,8 +386,31 @@ const styles = StyleSheet.create({
   // Steps
   stepTitle: {fontWeight: '700', color: C.text, marginBottom: 12, marginTop: 8},
 
+  // Search
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    height: 44,
+  },
+  searchIcon: {marginRight: 8},
+  searchInput: {flex: 1, color: C.text, fontSize: 14},
+
   // Medic Grid
+  medicsLoader: {marginVertical: 24},
   medicGrid: {flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20},
+  emptyText: {color: C.textMuted, padding: 8},
+  textWhite: {color: '#FFF'},
+  textWhiteMuted: {color: 'rgba(255,255,255,0.8)'},
+  availBadgeOn: {backgroundColor: '#27AE6020'},
+  availBadgeOff: {backgroundColor: '#88888820'},
+  availTextOn: {color: '#27AE60', fontWeight: '700' as const, fontSize: 10},
+  availTextOff: {color: '#888888', fontWeight: '700' as const, fontSize: 10},
   medicCard: {
     width: '47%',
     backgroundColor: '#FFF',

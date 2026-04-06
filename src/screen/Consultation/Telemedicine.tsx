@@ -112,8 +112,8 @@ const TelemedicineScreen: React.FC = () => {
 
   const loadData = useCallback(async () => {
     const [upcomingRes, recentRes] = await Promise.all([
-      get<ConsultationListResponse>('/consultations', {status: 'scheduled'}),
-      get<ConsultationListResponse>('/consultations', {status: 'completed'}),
+      get<ConsultationListResponse>('/consultations',{status:'pending'}),
+      get<ConsultationListResponse>('/consultations',{status:'completed'}),
     ]);
 
     if (upcomingRes.data?.success) {setUpcoming(upcomingRes.data.data);}
@@ -155,7 +155,7 @@ const TelemedicineScreen: React.FC = () => {
 
         {/* ── Hero Card — Next Consultation ── */}
         <Surface style={styles.heroCard} elevation={2}>
-          <TouchableOpacity style={styles.heroTop} onPress={() => navigation.navigate('VideoCall', {consultationId: nextConsult?.uuid ?? ''})} activeOpacity={0.8}>
+          <View style={styles.heroTop} >
             <View style={styles.heroBadge}>
               <View style={styles.heroBadgeDot} />
               <Text variant="labelSmall" style={styles.heroBadgeText}>
@@ -163,7 +163,7 @@ const TelemedicineScreen: React.FC = () => {
               </Text>
             </View>
             <Video size={20} color={C.primary} />
-          </TouchableOpacity>
+          </View>
 
           {nextConsult ? (
             <>
