@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Text, Surface, TextInput, ProgressBar} from 'react-native-paper';
+import {Text, Surface, TextInput} from 'react-native-paper';
 import {
   Scale,
   Droplets,
@@ -237,6 +237,7 @@ const ScreeningScreen: React.FC = () => {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <CustomHeader title="Health Screening" subtitle="Self Assessment" />
         <ScrollView
+          style={styles.flex}
           contentContainerStyle={styles.dashContent}
           showsVerticalScrollIndicator={false}>
 
@@ -279,13 +280,13 @@ const ScreeningScreen: React.FC = () => {
                   <View style={styles.resultMetric}>
                     <Text variant="labelSmall" style={styles.metricLabel}>Weight</Text>
                     <Text variant="titleLarge" style={styles.metricVal}>
-                      {lastScreening.weight_kg} <Text variant="labelSmall" style={styles.metricUnit}>kg</Text>
+                      {`${lastScreening.weight_kg} kg`}
                     </Text>
                   </View>
                   <View style={styles.resultMetric}>
                     <Text variant="labelSmall" style={styles.metricLabel}>Height</Text>
                     <Text variant="titleLarge" style={styles.metricVal}>
-                      {lastScreening.height_cm} <Text variant="labelSmall" style={styles.metricUnit}>cm</Text>
+                      {`${lastScreening.height_cm} cm`}
                     </Text>
                   </View>
                 </View>
@@ -350,11 +351,12 @@ const ScreeningScreen: React.FC = () => {
                   </Text>
                   <View style={styles.phq9ScoreInfo}>
                     <Text variant="bodySmall" style={styles.metricLabel}>out of 27</Text>
-                    <ProgressBar
-                      progress={lastScreening.phq9_score / 27}
-                      color={phqSev?.color}
-                      style={styles.phq9Progress}
-                    />
+                    <View style={styles.phq9Progress}>
+                      <View style={[styles.phq9ProgressFill, {
+                        width: `${(lastScreening.phq9_score / 27) * 100}%` as any,
+                        backgroundColor: phqSev?.color,
+                      }]} />
+                    </View>
                   </View>
                 </View>
               </Surface>
@@ -438,6 +440,7 @@ const ScreeningScreen: React.FC = () => {
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
+          style={styles.flex}
           contentContainerStyle={styles.formContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
@@ -595,7 +598,7 @@ const ScreeningScreen: React.FC = () => {
           {/* ── STEP 2: PHQ-9 ── */}
           {currentStep === 2 && (
             <View>
-              <Surface style={styles.formCard} elevation={1}>
+              <View style={[styles.formCard, styles.cardShadow]}>
                 <View style={styles.formCardHeader}>
                   <View style={[styles.formIcon, {backgroundColor: '#7B8FD420'}]}>
                     <Brain size={20} color="#7B8FD4" />
@@ -619,11 +622,10 @@ const ScreeningScreen: React.FC = () => {
                     Score: {phq9Score}/27
                   </Text>
                 </View>
-                <ProgressBar
-                  progress={phq9Progress}
-                  color="#7B8FD4"
-                  style={styles.phq9ProgressBar}
-                />
+                {/* Custom progress bar — ProgressBar from paper breaks flex layout on web */}
+                <View style={styles.phq9ProgressBar}>
+                  <View style={[styles.phq9ProgressFill, {width: `${phq9Progress * 100}%` as any}]} />
+                </View>
 
                 {/* Current Question */}
                 <View style={styles.phq9Question}>
@@ -715,7 +717,7 @@ const ScreeningScreen: React.FC = () => {
                     <View style={{width: 80}} />
                   )}
                 </View>
-              </Surface>
+              </View>
             </View>
           )}
 
@@ -816,7 +818,7 @@ const styles = StyleSheet.create({
   },
   phq9Score: {fontWeight: '900'},
   phq9ScoreInfo: {flex: 1},
-  phq9Progress: {height: 8, borderRadius: 4, marginTop: 8},
+  phq9Progress: {height: 8, borderRadius: 4, marginTop: 8, backgroundColor: '#E0E0E0', overflow: 'hidden'},
 
   // No data
   noDataWrapper: {alignItems: 'center', paddingTop: 60, paddingHorizontal: 40},
@@ -898,6 +900,13 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
+  cardShadow: {
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
   formCardHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -947,7 +956,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 6,
   },
-  phq9ProgressBar: {height: 6, borderRadius: 3, marginBottom: 20},
+  phq9ProgressBar: {height: 6, borderRadius: 3, marginBottom: 20, backgroundColor: '#E0E0E0', overflow: 'hidden'},
+  phq9ProgressFill: {height: 6, borderRadius: 3, backgroundColor: '#7B8FD4'},
   phq9Question: {
     backgroundColor: '#F9F9F9',
     borderRadius: 12,

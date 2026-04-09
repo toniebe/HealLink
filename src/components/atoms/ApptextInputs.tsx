@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -42,31 +42,17 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const wrapperRef = useRef<View>(null);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
   const hasError = Boolean(error);
 
   const handleFocus = (e: any) => {
-    wrapperRef.current?.setNativeProps({
-      style: {
-        borderColor: hasError ? '#E05252' : '#2A8FA0',
-        shadowColor: '#2A8FA0',
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-        elevation: 2,
-      },
-    });
+    setIsFocused(true);
     onFocus?.(e);
   };
 
   const handleBlur = (e: any) => {
-    wrapperRef.current?.setNativeProps({
-      style: {
-        borderColor: hasError ? '#E05252' : '#DDDDDD',
-        shadowOpacity: 0,
-        elevation: 0,
-      },
-    });
+    setIsFocused(false);
     onBlur?.(e);
   };
 
@@ -82,9 +68,9 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
       ) : null}
 
       <View
-        ref={wrapperRef}
         style={[
           styles.inputWrapper,
+          isFocused && styles.inputWrapperFocused,
           hasError && styles.inputWrapperError,
         ]}>
 

@@ -155,7 +155,7 @@ const TelemedicineScreen: React.FC = () => {
 
         {/* ── Hero Card — Next Consultation ── */}
         <Surface style={styles.heroCard} elevation={2}>
-          <View style={styles.heroTop} >
+          <TouchableOpacity style={styles.heroTop} onPress={() => navigation.navigate('VideoCall', {consultationId: nextConsult?.uuid})} activeOpacity={0.8}>
             <View style={styles.heroBadge}>
               <View style={styles.heroBadgeDot} />
               <Text variant="labelSmall" style={styles.heroBadgeText}>
@@ -163,7 +163,7 @@ const TelemedicineScreen: React.FC = () => {
               </Text>
             </View>
             <Video size={20} color={C.primary} />
-          </View>
+          </TouchableOpacity>
 
           {nextConsult ? (
             <>
