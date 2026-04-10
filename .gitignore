@@ -84,3 +84,4 @@ GoogleService-Info.plist
 
 android/app/healink-release.keystore
 android/gradle.properties
+web-build

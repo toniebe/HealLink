@@ -21,7 +21,7 @@ import {C} from '../../helper/theme';
 
 const generateTimeSlots = () => {
   const slots: string[] = [];
-  for (let h = 8; h <= 17; h++) {
+  for (let h = 7; h <= 17; h++) {
     slots.push(`${h.toString().padStart(2, '0')}:00`);
     slots.push(`${h.toString().padStart(2, '0')}:30`);
   }
@@ -30,7 +30,6 @@ const generateTimeSlots = () => {
 
 const timeSlots = generateTimeSlots();
 
-// ── Date Picker (simple 7 days) ───────────────────────────────────────────────
 
 const generateDates = () => {
   const dates = [];

@@ -1,22 +1,20 @@
 import React from 'react';
-import {
-  Home,
-  ClipboardList,
-  Stethoscope,
-} from 'lucide-react-native';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native';
+import { Home, Stethoscope, MessageCircle } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { C } from '../helper/theme';
 
-
-
-export const BottomTabBar: React.FC<{state: any; navigation: any}> = ({
+export const BottomTabBar: React.FC<{ state: any; navigation: any }> = ({
   state,
   navigation,
 }) => {
   const tabs = [
-    {name: 'Home', icon: Home, label: 'Home'},
-    {name: 'Screening', icon: ClipboardList, label: 'Screening'},
-    {name: 'TelemedicineHome', icon: Stethoscope, label: 'Telemedicine'},
+    { name: 'Home', icon: Home, label: 'Home' },
+    {
+      name: 'Wimbi',
+      icon: MessageCircle,
+      label: 'Wimbi',
+    },
+    { name: 'TelemedicineHome', icon: Stethoscope, label: 'Telemedicine' },
   ];
 
   return (
@@ -29,12 +27,14 @@ export const BottomTabBar: React.FC<{state: any; navigation: any}> = ({
             key={tab.name}
             style={tabStyles.tab}
             onPress={() => navigation.navigate(tab.name)}
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+          >
             <View
               style={[
                 tabStyles.iconWrapper,
                 isFocused && tabStyles.iconWrapperActive,
-              ]}>
+              ]}
+            >
               <Icon
                 size={22}
                 color={isFocused ? C.primary : '#BBBBBB'}
@@ -45,7 +45,8 @@ export const BottomTabBar: React.FC<{state: any; navigation: any}> = ({
               style={[
                 tabStyles.tabLabel,
                 isFocused && tabStyles.tabLabelActive,
-              ]}>
+              ]}
+            >
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -65,7 +66,7 @@ const tabStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: -4},
+    shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 10,

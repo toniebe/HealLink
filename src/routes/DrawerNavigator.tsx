@@ -7,7 +7,6 @@ import {
   DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import {
-  MessageCircle,
   TrendingUp,
   BookHeart,
   Bell,
@@ -16,22 +15,23 @@ import {
   X,
   Menu,
   Home,
+  ClipboardList,
 } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { authStore } from '../store/authStore';
 import { C } from '../helper/theme';
 
 import TabNavigator from './TabNavigator';
-import AIChatScreen from '../screen/AIChat';
 import TrendScreen from '../screen/Tren';
 import MoodJournalScreen from '../screen/Journal';
 import InsightScreen from '../screen/Insight';
 import ProfileScreen from '../screen/Profile';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
+import ScreeningScreen from '../screen/Skrining';
 
 export type DrawerParamList = {
   MainTab: undefined;
-  AIChat: undefined;
+  Screening: undefined;
   Tren: undefined;
   MoodJournal: undefined;
   Insight: undefined;
@@ -46,10 +46,11 @@ const drawerMenuItems = [
     Icon: Home,
     color: C.primary,
   },
+
   {
-    name: 'AIChat' as keyof DrawerParamList,
-    label: 'AI Chat',
-    Icon: MessageCircle,
+    name: 'Screening' as keyof DrawerParamList,
+    label: 'Screening Manual',
+    Icon: ClipboardList,
     color: C.primary,
   },
   {
@@ -252,7 +253,7 @@ const DrawerNavigator: React.FC = () => {
       }}
     >
       <Drawer.Screen name="MainTab" component={TabNavigator} />
-      <Drawer.Screen name="AIChat" component={AIChatScreen} />
+      <Drawer.Screen name="Screening" component={ScreeningScreen} />
       <Drawer.Screen name="Tren" component={TrendScreen} />
       <Drawer.Screen name="MoodJournal" component={MoodJournalScreen} />
       <Drawer.Screen name="Insight" component={InsightScreen} />
