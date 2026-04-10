@@ -16,4 +16,13 @@ export const authStore = {
     storage.remove('token');
     storage.remove('user');
   },
+
+  // ── Tour state ─────────────────────────────────────────────────────────────
+  hasTourCompleted: (key: string): boolean =>
+    storage.getString(key) === 'true',
+  completeTour: (key: string): void => storage.set(key, 'true'),
+  getDailyTourDate: (): string | undefined =>
+    storage.getString('tour_daily_date'),
+  setDailyTourDate: (date: string): void =>
+    storage.set('tour_daily_date', date),
 };

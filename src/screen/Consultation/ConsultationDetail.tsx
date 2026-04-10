@@ -91,29 +91,30 @@ const ConsultationDetailScreen: React.FC = () => {
     if (!consultation) {return;}
     setActionLoading('start');
 
-    const {data, error} = await patch<ConsultationResponse>(
-      `/consultations/${consultation.uuid}/start`,
-      {},
-    );
+    // const {data, error} = await patch<ConsultationResponse>(
+    //   `/consultations/${consultation.uuid}/start`,
+    //   {},
+    // );
 
-    setActionLoading(null);
+    // setActionLoading(null);
 
-    if (error || !data?.success) {
-      Alert.alert('Error', 'Failed to start consultation.');
-      return;
-    }
+    // if (error || !data?.success) {
+    //   Alert.alert('Error', 'Failed to start consultation.');
+    //   return;
+    // }
 
     await sendLocalNotification(
       '🎥 Consultation Started',
       `Your consultation has started. Tap to join the video call.`,
     );
 
-    setConsultation(data.data);
+    
 
     // Navigate to video call
     navigation.navigate('VideoCall', {
       consultationId: consultation.uuid,
       medic: consultation.medic,
+      consultation: consultation,
     });
   };
 
@@ -305,7 +306,26 @@ const ConsultationDetailScreen: React.FC = () => {
 
         {/* ── Actions ── */}
         <View style={styles.actionsWrapper}>
-          {canStart && (
+          {/* {canStart && (
+            <TouchableOpacity
+              style={styles.startBtn}
+              onPress={handleStart}
+              disabled={actionLoading === 'start'}
+              activeOpacity={0.85}>
+              {actionLoading === 'start' ? (
+                <ActivityIndicator color="#FFF" size="small" />
+              ) : (
+                <>
+                  <Video size={18} color="#FFF" />
+                  <Text variant="titleSmall" style={styles.startBtnText}>
+                    Start Consultation
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )} */}
+
+          {canStart || canComplete && (
             <TouchableOpacity
               style={styles.startBtn}
               onPress={handleStart}

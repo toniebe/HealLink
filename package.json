@@ -52,6 +52,7 @@
     "react-native-reanimated": "^4.3.0",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",
+    "react-native-spotlight-tour": "^4.0.0",
     "react-native-svg": "^15.15.4",
     "react-native-wear-connectivity": "^0.1.17",
     "react-native-web": "^0.21.2",

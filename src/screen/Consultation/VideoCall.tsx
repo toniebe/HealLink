@@ -29,30 +29,13 @@ import {
 //   MessageSquare,
 // } from 'lucide-react-native';
 import { C } from '../../helper/theme';
-// import { authStore } from '../../store/authStore';
-import { patch } from '../../helper/apiHelper';
-import { ConsultationResponse } from '../../types/telemedicineTypes';
+import { authStore } from '../../store/authStore';
 
 const STREAM_API_KEY = 'h8mvv4hyh5tn';
 const STREAM_USER_ID = 'ahmad59';
 const STREAM_TOKEN =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYWhtYWQ1OSIsImlzcyI6Img4bXZ2NGh5aDV0biIsInN1YiI6InVzZXIvYWhtYWQ1OSIsImlhdCI6MTc3NTc4MTc1MSwiZXhwIjoxNzc4MzczNzUxfQ.jJjXFA0JOZWy3P1I7qsASbPt-uDdgr9-jqpBNrMWXUI';
 // const USE_DEV_TOKEN = false;
-
-// /** Generate a Stream dev token (no signature — for testing only). */
-// const devToken = (userId: string): string => {
-//   const b64 = (obj: object) =>
-//     btoa(JSON.stringify(obj))
-//       .replace(/\+/g, '-')
-//       .replace(/\//g, '_')
-//       .replace(/=/g, '');
-//   return `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({
-//     user_id: userId,
-//   })}.devToken`;
-// };
-// ══════════════════════════════════════════════════════════════════════════════
-
-// ── Mood Config ───────────────────────────────────────────────────────────────
 
 const moodOptions = [
   { emoji: '😊', label: 'Happy', color: '#27AE60' },
@@ -61,8 +44,6 @@ const moodOptions = [
   { emoji: '😰', label: 'Anxious', color: C.orange },
   { emoji: '😢', label: 'Sad', color: '#5B8DEF' },
 ];
-
-// ── Notifee Helper ────────────────────────────────────────────────────────────
 
 const triggerCallNotification = async (medicName: string) => {
   try {
@@ -186,14 +167,13 @@ const CallInner: React.FC<{
   );
 };
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 
 const VideoCallScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const { consultationId, medic } = route.params;
 
-  // const user = authStore.getUser();
+  const user = authStore.getUser();
 
   const [client, setClient] = useState<StreamVideoClient | null>(null);
   const [call, setCall] = useState<any>(null);
@@ -205,7 +185,6 @@ const VideoCallScreen: React.FC = () => {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ── Format Duration ───────────────────────────────────────────────────────────
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60)
@@ -223,13 +202,14 @@ const VideoCallScreen: React.FC = () => {
         const streamClient = new StreamVideoClient({
           apiKey: STREAM_API_KEY,
           user: {
+            // id: STREAM_USER_ID,
             id: STREAM_USER_ID,
-            name: 'Ahmad',
+            name: user.name,
           },
           token: STREAM_TOKEN,
         });
 
-        const callId = `development_8e66d1c6-8ecb-453c-ae24-bea0a6b47c29`;
+        const callId = consultationId;
         const streamCall = streamClient.call('default', callId);
 
         await streamCall.join({ create: true });
@@ -262,7 +242,7 @@ const VideoCallScreen: React.FC = () => {
       }
       notifee.cancelAllNotifications();
     };
-  }, [medic?.name, navigation]);
+  }, [consultationId, medic?.name, navigation, user.name]);
 
   // ── End Call ──────────────────────────────────────────────────────────────────
 
@@ -275,10 +255,6 @@ const VideoCallScreen: React.FC = () => {
         onPress: async () => {
           try {
             await call?.leave();
-            await patch<ConsultationResponse>(
-              `/consultations/${consultationId}/complete`,
-              {},
-            );
             await client?.disconnectUser();
             await notifee.cancelAllNotifications();
           } catch (e) {
@@ -288,7 +264,7 @@ const VideoCallScreen: React.FC = () => {
         },
       },
     ]);
-  }, [call, client, consultationId, navigation]);
+  }, [call, client, navigation]);
 
   // ── Loading ───────────────────────────────────────────────────────────────────
 

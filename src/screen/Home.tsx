@@ -25,6 +25,8 @@ import { authStore } from '../store/authStore';
 import { C } from '../helper/theme';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { get } from '../helper/apiHelper';
+import { AttachStep } from 'react-native-spotlight-tour';
+import { useTour } from '../context/TourContext';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface ScreeningData {
@@ -145,6 +147,7 @@ const sleepDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HomeScreen: React.FC = () => {
   const user = authStore.getUser();
   const navigation = useNavigation<any>();
+  const { startScreeningTour, startDailyTour, startWimbiTour } = useTour();
 
   const [screening, setScreening] = useState<ScreeningData | null>(null);
   const [sleepHistory, setSleepHistory] = useState<SleepEntry[]>([]);
@@ -168,6 +171,28 @@ const HomeScreen: React.FC = () => {
     if (mentalRes.data?.success)    { setLatestMental(mentalRes.data.data); }
 
     setLoading(false);
+  }, []);
+
+  // ── Tour trigger ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const screeningDone = authStore.hasTourCompleted('tour_screening_completed');
+    const wimbiDone = authStore.hasTourCompleted('tour_wimbi_completed');
+    const dailyDate = authStore.getDailyTourDate();
+
+    // Small delay to let the screen finish rendering before starting the tour
+    const timer = setTimeout(() => {
+      if (!screeningDone) {
+        startScreeningTour();
+      } else if (dailyDate !== today) {
+        startDailyTour();
+      } else if (!wimbiDone) {
+        startWimbiTour();
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -210,15 +235,15 @@ const HomeScreen: React.FC = () => {
       >
         {/* ── Header ──────────────────────────────────────────────── */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          {/* Menu button — index [0,3]: step0=screening, step3=daily (multi-index reuses same element) */}
+          <AttachStep index={[0, 3]}>
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-              activeOpacity={0.8}
-            >
+              activeOpacity={0.8}>
               <Menu size={20} color={C.primary} />
             </TouchableOpacity>
-          </View>
+          </AttachStep>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
               <Search size={20} color={C.text} />
@@ -232,14 +257,17 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
 
-        <View style={styles.sectionHeader}>
-          <View style={styles.welcomeRow}>
-            <Text variant="bodySmall" style={styles.welcomeText}>Welcome, </Text>
-            <Text variant="titleMedium" style={styles.userName}>{user?.name ?? 'User'}</Text>
+        {/* Overview section — index 1: screening step2 */}
+        <AttachStep index={1}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.welcomeRow}>
+              <Text variant="bodySmall" style={styles.welcomeText}>Welcome, </Text>
+              <Text variant="titleMedium" style={styles.userName}>{user?.name ?? 'User'}</Text>
+            </View>
+            <Text variant="headlineMedium" style={styles.overviewTitle}>Overview</Text>
+            <Text variant="bodySmall" style={styles.overviewSub}>Dashboard Your Health</Text>
           </View>
-          <Text variant="headlineMedium" style={styles.overviewTitle}>Overview</Text>
-          <Text variant="bodySmall" style={styles.overviewSub}>Dashboard Your Health</Text>
-        </View>
+        </AttachStep>
 
         {loading ? (
           <ActivityIndicator color={C.primary} style={styles.loader} />
@@ -384,76 +412,79 @@ const HomeScreen: React.FC = () => {
             </View>
 
             {/* ══ Sleep ════════════════════════════════════════════════ */}
-            <Surface style={styles.card} elevation={1}>
-              <View style={styles.cardHeader}>
-                <View style={[styles.cardIconWrapper, styles.iconSleep]}>
-                  <Moon size={18} color="#7B8FD4" />
+            {/* index 2: daily step1 (sleep card) */}
+            <AttachStep index={2} fill>
+              <Surface style={styles.card} elevation={1}>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.cardIconWrapper, styles.iconSleep]}>
+                    <Moon size={18} color="#7B8FD4" />
+                  </View>
+                  <View style={styles.cardTitleGroup}>
+                    <Text variant="labelMedium" style={styles.cardTitle}>Sleep Quality</Text>
+                    <Text variant="labelSmall" style={styles.cardSubtitle}>Last 7 days</Text>
+                  </View>
+                  {avgSleepHours && (
+                    <Text variant="labelSmall" style={[styles.statusBadge, styles.badgeSleep]}>
+                      ● {avgSleepHours} hrs avg
+                    </Text>
+                  )}
                 </View>
-                <View style={styles.cardTitleGroup}>
-                  <Text variant="labelMedium" style={styles.cardTitle}>Sleep Quality</Text>
-                  <Text variant="labelSmall" style={styles.cardSubtitle}>Last 7 days</Text>
-                </View>
-                {avgSleepHours && (
-                  <Text variant="labelSmall" style={[styles.statusBadge, styles.badgeSleep]}>
-                    ● {avgSleepHours} hrs avg
-                  </Text>
-                )}
-              </View>
 
-              {sleepChartData.length > 0 ? (
-                <>
-                  <BarChart
-                    data={sleepChartData}
-                    width={280}
-                    height={80}
-                    barWidth={26}
-                    spacing={12}
-                    hideRules
-                    hideAxesAndRules
-                    barBorderRadius={6}
-                    noOfSections={4}
-                    maxValue={12}
-                    yAxisThickness={0}
-                    xAxisThickness={0}
-                    isAnimated
-                  />
-                  <View style={styles.dayLabels}>
-                    {(displaySleepDays.length > 0 ? displaySleepDays : sleepDays).map((day, i) => (
-                      <Text key={i} variant="labelSmall" style={styles.dayLabel}>{day}</Text>
-                    ))}
+                {sleepChartData.length > 0 ? (
+                  <>
+                    <BarChart
+                      data={sleepChartData}
+                      width={280}
+                      height={80}
+                      barWidth={26}
+                      spacing={12}
+                      hideRules
+                      hideAxesAndRules
+                      barBorderRadius={6}
+                      noOfSections={4}
+                      maxValue={12}
+                      yAxisThickness={0}
+                      xAxisThickness={0}
+                      isAnimated
+                    />
+                    <View style={styles.dayLabels}>
+                      {(displaySleepDays.length > 0 ? displaySleepDays : sleepDays).map((day, i) => (
+                        <Text key={i} variant="labelSmall" style={styles.dayLabel}>{day}</Text>
+                      ))}
+                    </View>
+                    <View style={styles.metricRow}>
+                      <View style={styles.metricItem}>
+                        <Text variant="labelSmall" style={styles.metricLabel}>Shortest</Text>
+                        <Text variant="titleMedium" style={[styles.metricVal, styles.valRed]}>
+                          {(Math.min(...sleepHistory.map(s => s.duration_minutes)) / 60).toFixed(1)}
+                        </Text>
+                        <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
+                      </View>
+                      <View style={styles.metricDivider} />
+                      <View style={styles.metricItem}>
+                        <Text variant="labelSmall" style={styles.metricLabel}>Average</Text>
+                        <Text variant="titleMedium" style={[styles.metricVal, styles.valSleep]}>
+                          {avgSleepHours}
+                        </Text>
+                        <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
+                      </View>
+                      <View style={styles.metricDivider} />
+                      <View style={styles.metricItem}>
+                        <Text variant="labelSmall" style={styles.metricLabel}>Best</Text>
+                        <Text variant="titleMedium" style={[styles.metricVal, styles.valGreen]}>
+                          {(Math.max(...sleepHistory.map(s => s.duration_minutes)) / 60).toFixed(1)}
+                        </Text>
+                        <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
+                      </View>
+                    </View>
+                  </>
+                ) : (
+                  <View style={styles.noDataBox}>
+                    <Text variant="bodySmall" style={styles.noDataText}>No sleep data this week.</Text>
                   </View>
-                  <View style={styles.metricRow}>
-                    <View style={styles.metricItem}>
-                      <Text variant="labelSmall" style={styles.metricLabel}>Shortest</Text>
-                      <Text variant="titleMedium" style={[styles.metricVal, styles.valRed]}>
-                        {(Math.min(...sleepHistory.map(s => s.duration_minutes)) / 60).toFixed(1)}
-                      </Text>
-                      <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
-                    </View>
-                    <View style={styles.metricDivider} />
-                    <View style={styles.metricItem}>
-                      <Text variant="labelSmall" style={styles.metricLabel}>Average</Text>
-                      <Text variant="titleMedium" style={[styles.metricVal, styles.valSleep]}>
-                        {avgSleepHours}
-                      </Text>
-                      <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
-                    </View>
-                    <View style={styles.metricDivider} />
-                    <View style={styles.metricItem}>
-                      <Text variant="labelSmall" style={styles.metricLabel}>Best</Text>
-                      <Text variant="titleMedium" style={[styles.metricVal, styles.valGreen]}>
-                        {(Math.max(...sleepHistory.map(s => s.duration_minutes)) / 60).toFixed(1)}
-                      </Text>
-                      <Text variant="labelSmall" style={styles.metricUnit}>hrs</Text>
-                    </View>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.noDataBox}>
-                  <Text variant="bodySmall" style={styles.noDataText}>No sleep data this week.</Text>
-                </View>
-              )}
-            </Surface>
+                )}
+              </Surface>
+            </AttachStep>
 
             {/* ══ BMI ══════════════════════════════════════════════════ */}
             <Surface style={styles.card} elevation={1}>

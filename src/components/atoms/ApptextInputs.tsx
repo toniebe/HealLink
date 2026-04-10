@@ -37,24 +37,24 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
   containerStyle,
   labelStyle,
   inputStyle,
-  onFocus,
-  onBlur,
+  // onFocus,
+  // onBlur,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isFocused, setIsFocused] = useState<boolean>(false);
+  // const [isFocused, setIsFocused] = useState<boolean>(false);
 
   const hasError = Boolean(error);
 
-  const handleFocus = (e: any) => {
-    setIsFocused(true);
-    onFocus?.(e);
-  };
+  // const handleFocus = (e: any) => {
+  //   setIsFocused(true);
+  //   onFocus?.(e);
+  // };
 
-  const handleBlur = (e: any) => {
-    setIsFocused(false);
-    onBlur?.(e);
-  };
+  // const handleBlur = (e: any) => {
+  //   setIsFocused(false);
+  //   onBlur?.(e);
+  // };
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -70,7 +70,7 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
       <View
         style={[
           styles.inputWrapper,
-          isFocused && styles.inputWrapperFocused,
+          
           hasError && styles.inputWrapperError,
         ]}>
 
@@ -87,8 +87,8 @@ const AppTextInput: React.FC<AppTextInputProps> = ({
           ]}
           placeholderTextColor="#AAAAAA"
           secureTextEntry={isPassword && !showPassword}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+          // onFocus={handleFocus}
+          // onBlur={handleBlur}
           {...props}
         />
 

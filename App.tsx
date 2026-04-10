@@ -4,8 +4,10 @@ import { AuthProvider } from './src/context/AuthContext';
 import { PaperProvider } from 'react-native-paper';
 import { theme } from './src/helper/theme';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SpotlightTourProvider, TourStep } from 'react-native-spotlight-tour';
+import { TourProvider } from './src/context/TourContext';
 
 const requestNotifeePermission = async () => {
   const settings = await notifee.requestPermission();
@@ -15,6 +17,8 @@ const requestNotifeePermission = async () => {
 };
 
 function App() {
+  const [tourSteps, setTourSteps] = useState<TourStep[]>([]);
+
   useEffect(() => {
     requestNotifeePermission();
   }, []);
@@ -22,11 +26,22 @@ function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <PaperProvider theme={theme}>
-            <Router />
-          </PaperProvider>
-        </AuthProvider>
+        <SpotlightTourProvider
+          steps={tourSteps}
+          overlayColor="black"
+          overlayOpacity={0.65}
+          motion="slide"
+          shape={{ type: 'rectangle', padding: 8 }}
+          onBackdropPress="stop"
+          nativeDriver>
+          <TourProvider setSteps={setTourSteps}>
+            <AuthProvider>
+              <PaperProvider theme={theme}>
+                <Router />
+              </PaperProvider>
+            </AuthProvider>
+          </TourProvider>
+        </SpotlightTourProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

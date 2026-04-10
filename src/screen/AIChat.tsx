@@ -10,10 +10,11 @@ import {
   TextInput,
 } from 'react-native';
 import { Text, Surface } from 'react-native-paper';
-import { Send, Mic, Bot, AlertTriangle } from 'lucide-react-native';
+import { Send, Mic, Bot, AlertTriangle, ArrowLeft } from 'lucide-react-native';
 import { get, post } from '../helper/apiHelper';
 import { C } from '../helper/theme';
 import CustomHeader from '../components/molecules/HeaderCustom';
+import { useNavigation } from '@react-navigation/native';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -190,6 +191,7 @@ const TypingIndicator: React.FC = () => (
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 const AIChatScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -296,12 +298,18 @@ const AIChatScreen: React.FC = () => {
         title="AI Health Assistant"
         subtitle="Online — Ready to consult"
         centerTitle
-        showMenu
+        showMenu={false}
+        leftComponent={
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}>
+            <ArrowLeft size={20} color={C.primary} />
+          </TouchableOpacity>
+        }
       />
 
-      {/* Mood Bar */}
-      {/* <MoodBar messages={messages} /> */}
-
+      
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -400,6 +408,7 @@ const AIChatScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   flex: { flex: 1 },
+  backBtn: { padding: 8 },
 
 
 

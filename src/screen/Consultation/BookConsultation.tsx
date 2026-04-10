@@ -17,11 +17,9 @@ import {ConsultationResponse, MedicUser, MedicsListResponse} from '../../types/t
 import {get, post} from '../../helper/apiHelper';
 import {C} from '../../helper/theme';
 
-// ── Time Slots ────────────────────────────────────────────────────────────────
-
 const generateTimeSlots = () => {
   const slots: string[] = [];
-  for (let h = 7; h <= 17; h++) {
+  for (let h = 8; h <= 21; h++) {
     slots.push(`${h.toString().padStart(2, '0')}:00`);
     slots.push(`${h.toString().padStart(2, '0')}:30`);
   }
@@ -29,7 +27,6 @@ const generateTimeSlots = () => {
 };
 
 const timeSlots = generateTimeSlots();
-
 
 const generateDates = () => {
   const dates = [];
@@ -43,7 +40,6 @@ const generateDates = () => {
 
 const availableDates = generateDates();
 
-// ── Notifee ───────────────────────────────────────────────────────────────────
 
 const sendBookingNotification = async (medicName: string, scheduledAt: string) => {
   const channelId = await notifee.createChannel({
@@ -60,7 +56,6 @@ const sendBookingNotification = async (medicName: string, scheduledAt: string) =
   });
 };
 
-// ── Main Screen ───────────────────────────────────────────────────────────────
 
 const BookConsultationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
