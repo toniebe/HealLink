@@ -19,7 +19,7 @@ const SplashScreen = ({navigation}: any) => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../assets/images/Healink2.png')}
+        source={require('../assets/images/Healink_Logo.png')}
         style={{width: 200, height: 200}}
         resizeMode="contain"
       />
