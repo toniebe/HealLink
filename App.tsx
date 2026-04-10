@@ -5,6 +5,7 @@ import { PaperProvider } from 'react-native-paper';
 import { theme } from './src/helper/theme';
 import notifee, { AuthorizationStatus } from '@notifee/react-native';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const requestNotifeePermission = async () => {
   const settings = await notifee.requestPermission();
@@ -19,13 +20,15 @@ function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <PaperProvider theme={theme}>
-          <Router />
-        </PaperProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <PaperProvider theme={theme}>
+            <Router />
+          </PaperProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

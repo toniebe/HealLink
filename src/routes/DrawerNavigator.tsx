@@ -9,7 +9,6 @@ import {
 import {
   TrendingUp,
   BookHeart,
-  Bell,
   LogOut,
   ChevronRight,
   X,
@@ -24,7 +23,6 @@ import { C } from '../helper/theme';
 import TabNavigator from './TabNavigator';
 import TrendScreen from '../screen/Tren';
 import MoodJournalScreen from '../screen/Journal';
-import InsightScreen from '../screen/Insight';
 import ProfileScreen from '../screen/Profile';
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import ScreeningScreen from '../screen/Skrining';
@@ -34,7 +32,6 @@ export type DrawerParamList = {
   Screening: undefined;
   Tren: undefined;
   MoodJournal: undefined;
-  Insight: undefined;
   Profile: undefined;
   Settings: undefined;
 };
@@ -65,13 +62,6 @@ const drawerMenuItems = [
     Icon: BookHeart,
     color: '#27AE60',
   },
-  {
-    name: 'Insight' as keyof DrawerParamList,
-    label: 'AI Insights',
-    Icon: Bell,
-    color: C.orange,
-  },
-
 ];
 
 // ── Custom Drawer Content ─────────────────────────────────────────────────────
@@ -256,7 +246,6 @@ const DrawerNavigator: React.FC = () => {
       <Drawer.Screen name="Screening" component={ScreeningScreen} />
       <Drawer.Screen name="Tren" component={TrendScreen} />
       <Drawer.Screen name="MoodJournal" component={MoodJournalScreen} />
-      <Drawer.Screen name="Insight" component={InsightScreen} />
       <Drawer.Screen name="Profile" component={ProfileScreen} />
     </Drawer.Navigator>
   );
